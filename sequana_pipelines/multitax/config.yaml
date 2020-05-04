@@ -8,7 +8,7 @@
 # ============================================================================
 
 
-input_directory: /home/cokelaer/Temp/test/B3910
+input_directory: 
 input_readtag: _R[12]_
 input_pattern: "*fastq.gz"
 

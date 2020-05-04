@@ -1,2 +1,3 @@
 - kraken
 - kraken2
+- krona
