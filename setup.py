@@ -72,7 +72,8 @@ setup(
     packages = ["sequana_pipelines.multitax",
         'sequana_pipelines.multitax.data' ],
 
-    install_requires = open("requirements.txt").read(),
+    install_requires = "sequana"
+    #open("requirements.txt").read(),
 
     # This is recursive include of data files
     exclude_package_data = {"": ["__pycache__"]},
