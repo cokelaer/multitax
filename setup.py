@@ -72,7 +72,7 @@ setup(
     packages = ["sequana_pipelines.multitax",
         'sequana_pipelines.multitax.data' ],
 
-    install_requires = "sequana"
+    install_requires = "sequana",
     #open("requirements.txt").read(),
 
     # This is recursive include of data files
