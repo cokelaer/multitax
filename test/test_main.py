@@ -25,17 +25,18 @@ def test_standalone_script():
 def test_full():
 
     with tempfile.TemporaryDirectory() as directory:
-        print(directory)
         wk = directory
-
-        cmd = "sequana_pipelines_multitax --input-directory {} "
-        cmd += "--working-directory {}  --force --databases toydb"
-        cmd = cmd.format(sharedir, wk)
+        print(sharedir)
+        cmd = 'sequana_pipelines_multitax --input-directory {} --input-pattern E*fastq.gz'
+        cmd += ' --working-directory {}  --force --databases toydb '
+        cmd = cmd.format(sharedir , wk)
         subprocess.call(cmd.split())
 
         stat = subprocess.call("sh multitax.sh".split(), cwd=wk)
+        print(os.listdir(wk))
 
-        assert os.path.exists(wk + "/multi_summary.html")
+        assert os.path.exists(wk + "/multiqc/multiqc_report.html")
+
 
 def test_version():
     cmd = "sequana_pipelines_multitax --version"

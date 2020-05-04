@@ -11,15 +11,14 @@
 input_directory: /home/cokelaer/Temp/test/B3910
 input_readtag: _R[12]_
 input_pattern: "*fastq.gz"
-#'4[6,7]*fastq.gz'
 
 
 ##############################################################################
-# Your section
+# sequana_taxonomy
 #
 # :Parameters:
 #
-# - options: string with any valid FastQC options
+# - databases: list of kraken databases to be used
 sequana_taxonomy:
     databases:
         - 
