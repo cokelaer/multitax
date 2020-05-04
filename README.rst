@@ -50,9 +50,11 @@ Requirements
 
 This pipelines requires the following executable(s):
 
-- TODO
+- kraken
+- kraken2
+- sequana_taxonomy
 
-.. image:: https://raw.githubusercontent.com/sequana/sequana_multitax/master/sequana_pipelines/multitax/dag.png
+.. image:: https://raw.githubusercontent.com/sequana/sequana_multitax/blob/master/sequana_pipelines/multitax/dag.png
 
 
 Details
@@ -74,7 +76,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
-0.0.1     **First release.**
+0.8.0     **First release.**
 ========= ====================================================================
 
 
