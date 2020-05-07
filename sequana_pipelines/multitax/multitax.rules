@@ -152,7 +152,6 @@ onsuccess:
 
 
     data = open("outputs/dendogram.info").readline()
-    print(data)
     if data == "ok":
         intro += """<img style="height:50%;width:50%" src="outputs/dendogram.png"></img><br>"""
 
