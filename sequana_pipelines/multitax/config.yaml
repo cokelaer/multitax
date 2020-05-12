@@ -23,6 +23,7 @@ sequana_taxonomy:
     databases:
         - 
     level: DEBUG
+    confidence: 0
 
 
 summary_plot:

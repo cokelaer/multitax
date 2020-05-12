@@ -76,6 +76,9 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.8.3     * add the confidence option in sequana_taxonomy rule
+          * improve html report
+          * uses new sequana framework to speed up --help calls
 0.8.2     * less stringent on requirements (mode warning)  
           * fix input of the multiqc rule
 0.8.1     Fix requirements.

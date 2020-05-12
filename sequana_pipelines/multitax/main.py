@@ -2,16 +2,13 @@ import sys
 import os
 import argparse
 
-from sequana.pipelines_common import *
-from sequana.snaketools import Module
-from sequana import logger
-logger.level = "INFO"
+from sequana_pipetools.options import *
+from sequana_pipetools.misc import Colors
+from sequana_pipetools.info import sequana_epilog, sequana_prolog
 
 col = Colors()
 
 NAME = "multitax"
-m = Module(NAME)
-m.is_executable()
 
 
 class Options(argparse.ArgumentParser):
@@ -21,7 +18,6 @@ class Options(argparse.ArgumentParser):
             epilog=epilog,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-
         # add a new group of options to the parser
         so = SlurmOptions()
         so.add_options(self)
@@ -40,40 +36,53 @@ class Options(argparse.ArgumentParser):
 
         pipeline_group.add_argument('--kraken-level', dest="kraken_level",
             default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        pipeline_group.add_argument('--kraken-confidence', dest="kraken_confidence",
+            type=float, 
+            default=0, help="""confidence parameter used with kraken2 databases only""")
         pipeline_group.add_argument("--databases", dest="databases", type=str,
-            nargs="+",
+            nargs="+", required=True, 
             help="""Path to a valid Kraken database(s). See sequana_taxonomy
                 standaline to download some. You may use several, in which case, an
                 iterative taxonomy is performed as explained in online sequana
-                documentation.""")
+                documentation. You may mix kraken1 and kraken2 databases""")
 
 
 
 def main(args=None):
-
     if args is None:
         args = sys.argv
 
     # whatever needs to be called by all pipeline before the options parsing
+    from sequana_pipetools.options import init_pipeline
     init_pipeline(NAME)
 
     # option parsing including common epilog
     options = Options(NAME, epilog=sequana_epilog).parse_args(args[1:])
 
+    from sequana.snaketools import Module
+    m = Module(NAME)
+    m.is_executable()
+
+    from sequana import logger
+    from sequana.pipelines_common import SequanaManager
+    logger.level = options.level
     # the real stuff is here
-    manager = PipelineManager(options, NAME)
+    manager = SequanaManager(options, NAME)
 
     # create the beginning of the command and the working directory
     manager.setup()
 
     # fill the config file with input parameters
     cfg = manager.config.config
-    cfg.input_directory = os.path.abspath(options.input_directory)
     cfg.input_pattern = options.input_pattern
     cfg.input_readtag = options.input_readtag
+    cfg.input_directory = os.path.abspath(options.input_directory)
+
+    manager.exists(cfg.input_directory)
 
     cfg['sequana_taxonomy']['level'] = options.kraken_level
     cfg['sequana_taxonomy']['databases'] = options.databases
+    cfg['sequana_taxonomy']['confidence'] = options.kraken_confidence
 
     # finalise the command and save it; copy the snakemake. update the config
     # file and save it.

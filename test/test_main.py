@@ -10,8 +10,8 @@ sharedir = getpath('multitax')
 
 def test_standalone_subprocess():
     directory = tempfile.TemporaryDirectory()
-    cmd = """sequana_pipelines_multitax --input-directory {} 
-            --working-directory {} --force""".format(sharedir, directory.name)
+    cmd = """sequana_pipelines_multitax --input-directory {}  
+            --working-directory {} --force --databases toydb """.format(sharedir, directory.name)
     subprocess.call(cmd.split())
 
 
@@ -19,7 +19,8 @@ def test_standalone_script():
     directory = tempfile.TemporaryDirectory()
     import sequana_pipelines.multitax.main as m
     sys.argv = ["test", "--input-directory", sharedir, 
-            "--working-directory", directory.name, "--force"]
+            "--working-directory", directory.name, "--force", "--databases",
+            "toydb"]
     m.main()
 
 def test_full():
