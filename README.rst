@@ -76,6 +76,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.8.4     * implement the --from-project option
 0.8.3     * add the confidence option in sequana_taxonomy rule
           * improve html report
           * uses new sequana framework to speed up --help calls

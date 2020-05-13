@@ -7,7 +7,7 @@ import subprocess
 
 _MAJOR               = 0
 _MINOR               = 8
-_MICRO               = 3
+_MICRO               = 4
 version              = '%d.%d.%d' % (_MAJOR, _MINOR, _MICRO)
 release              = '%d.%d' % (_MAJOR, _MINOR)
 
@@ -72,8 +72,7 @@ setup(
     packages = ["sequana_pipelines.multitax",
         'sequana_pipelines.multitax.data' ],
 
-    install_requires = "sequana",
-    #open("requirements.txt").read(),
+    install_requires = open("requirements.txt").read(),
 
     # This is recursive include of data files
     exclude_package_data = {"": ["__pycache__"]},
