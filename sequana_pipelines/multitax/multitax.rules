@@ -20,8 +20,6 @@ configfile: "config.yaml"
 manager = sm.PipelineManager("multitax", config)
 manager.setup(globals(), mode="warning")
 
-import matplotlib
-matplotlib.use('Agg')
 
 __taxonomy__input_fastq = manager.getrawdata()
 __taxonomy__output_summary = '{sample}/kraken/kraken.out.summary'
@@ -136,7 +134,6 @@ rule dendogram:
 
 __conda__output = "inputs/requirements.txt"
 include: sm.modules['conda']   # Create requirements.txt(dependencies)
-__rulegraph__input = __snakefile__
 __rulegraph__input = manager.snakefile
 __rulegraph__output = ".sequana/rulegraph.svg"
 __rulegraph__mapper = {"multiqc": "../multiqc/multiqc_report.html"}
@@ -189,7 +186,7 @@ onsuccess:
     data = {"name": "multitax",
             "rulegraph": __rulegraph__output,
             "stats": "stats.txt",
-            "requirements": "inputs/requirements.txt"
+            #"requirements": "inputs/requirements.txt"
             }
     for sample in sorted(manager.samples):
         image = SummaryModule2.png_to_embedded_png("self_dummy", 

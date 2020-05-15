@@ -1,5 +1,4 @@
-# ============================================================================
-# Config file for Quality Control
+# Config file for multitax pipeline
 # ==========================================[ Sections for the users ]========
 #
 # One of input_directory, input_pattern and input_samples must be provided

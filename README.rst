@@ -55,7 +55,7 @@ This pipelines requires the following executable(s):
 - sequana_taxonomy
 
 
-.. image::   https://github.com/sequana/sequana_multitax/raw/master/sequana_pipelines/multitax/dag.png
+.. image:: https://raw.githubusercontent.com/sequana/sequana_multitax/master/sequana_pipelines/multitax/dag.png
 
 Details
 ~~~~~~~~~
@@ -76,6 +76,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.8.5     * fix typo
 0.8.4     * implement the --from-project option
 0.8.3     * add the confidence option in sequana_taxonomy rule
           * improve html report

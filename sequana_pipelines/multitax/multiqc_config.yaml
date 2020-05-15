@@ -117,7 +117,7 @@ sp:
 custom_logo: .sequana/logo.png         # '/path/to/logo.png'
 custom_logo_url: https://github.com/sequana/sequana_multitax    # 'https://www.example.com'
 custom_logo_title: "Sequana pipeline page (multitax)"
-subtitle: '<a href="https://github.com/sequana/sequana_multitax">Issues, stars, comments: visit the multitax page.</a>'
+subtitle: '<a href="https://github.com/sequana/sequana_multitax">Issues, stars, comments: visit the sequana_multitax page.</a>'
 intro_text: ""
 
 # Add generic information to the top of reports
