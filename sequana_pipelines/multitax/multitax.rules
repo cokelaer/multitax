@@ -75,19 +75,12 @@ rule summary_plot:
         with open(output.data, "w") as fout:
              json.dump(k.get_df().to_dict(), fout, indent=True, sort_keys=True)
 
+
+
+
 __multiqc__input = __summary_plot__output_summary
 __multiqc__output = "multiqc/multiqc_report.html"
-
-rule multiqc:
-    input:  __multiqc__input
-    output: __multiqc__output
-    params:
-        inputdir = config['multiqc']['indir'],
-        outdir="multiqc",
-        config="multiqc_config.yaml",
-        options = config["multiqc"]["options"] 
-    shell:
-        "multiqc {params.inputdir} -o {params.outdir} -c {params.config} {params.options} 2> multiqc/multiqc.log"
+include: sm.modules["multiqc/2.0"]
 
 
 rule dendogram:
