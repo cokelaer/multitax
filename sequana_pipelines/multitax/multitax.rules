@@ -23,18 +23,28 @@ manager.setup(globals(), mode="warning")
 
 __taxonomy__input_fastq = manager.getrawdata()
 __taxonomy__output_summary = '{sample}/kraken/kraken.out.summary'
+__taxonomy__output_summary_json = '{sample}/kraken/summary.json'
 __taxonomy__output_html = '{sample}/summary.html'
 __taxonomy__output_csv = '{sample}/kraken/kraken.csv'
 
+
+expected_output = ["outputs/dendogram.png", "multiqc/multiqc_report.html",
+                   ".sequana/rulegraph.svg", "outputs/proportion_kraken.png"]
+if len(config['sequana_taxonomy']["databases"])>1:
+    expected_output += ["outputs/proportion_dbs.png"]
+
+
 rule all:
-    input: "outputs/dendogram.png", "multiqc/multiqc_report.html", ".sequana/rulegraph.svg", "outputs/proportion_kraken.png"
+    input: expected_output
+
 
 rule sequana_taxonomy:
     input: __taxonomy__input_fastq
     output:
-        html   = __taxonomy__output_html,
-        csv    = __taxonomy__output_csv,
-        summary= __taxonomy__output_summary
+        html         = __taxonomy__output_html,
+        csv          = __taxonomy__output_csv,
+        summary      = __taxonomy__output_summary,
+        summary_json = __taxonomy__output_summary_json
     threads: 4
     run:
         outdir = output.html.split("/",1)[0]
@@ -75,10 +85,22 @@ rule summary_plot:
         with open(output.data, "w") as fout:
              json.dump(k.get_df().to_dict(), fout, indent=True, sort_keys=True)
 
+if len(config["sequana_taxonomy"]["databases"]) > 1:
+    __summary_plot_db__output_image = "outputs/proportion_dbs.png"
+    rule summary_plot_db:
+        input: expand(__taxonomy__output_summary_json, sample=manager.samples)
+        output:
+            image=__summary_plot_db__output_image,
+        run:
+            from sequana.kraken import MultiKrakenResults2
+            k = MultiKrakenResults2(manager.samples)
+            k.plot_stacked_hist(output.image, dpi=200, ytick_fontsize=11)
 
 
 
-__multiqc__input = __summary_plot__output_summary
+
+
+__multiqc__input = expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
 __multiqc__output = "multiqc/multiqc_report.html"
 include: sm.modules["multiqc/2.0"]
 
@@ -134,7 +156,7 @@ include: sm.modules['rulegraph']
 
 
 # Those rules takes a couple of seconds so no need for a cluster
-localrules: multiqc, rulegraph, summary_plot, dendogram
+localrules: multiqc, rulegraph, summary_plot, dendogram, summary_plot_db
 
 
 onsuccess:
@@ -150,26 +172,64 @@ onsuccess:
     # HTML report:
     from sequana.modules_report.summary import SummaryModule2
     from sequana.modules_report.kraken import KrakenModule
-    intro = """<h2>Kraken analysis</h2>
-        <p>Proportion of reads in virus, bacteria, human and unclassified categories:</p>
+    intro = """<h2>General Information</h2>{}""".format(manager.get_html_summary())
+    intro += """<div>This pipeline summarizes the taxonomic analysis 
+                made on {} samples. Here below you can find a summary 
+                of the analysis. The first plot shows the proportion of 
+                reads classified by the databases in each found kingdom. 
+                If several databases are provided you should also see a 
+                plot with proportion of reads classified in each database.
+                The per-sample analysis are made with kraken. A multi-sample 
+                report is also available as 
+                <a href="multiqc/multiqc_report.html">sequana multiqc</a> report.
+                Individual report are browsable from this page</div>""".format(len(manager.samples))
+
+    intro += """<div style="clear:both"></div>"""
+    intro += """<h2>Analysis overview</h2>
+        <div style="width:48%; float:left"><p>Proportion of reads in virus, bacteria, human and unclassified categories:</p>
     """
-
     img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png", 
-        style="align:center; width:45%; height:40%")
+        style="height:40%")
+    intro += img + "</div>"
+    if len(config['sequana_taxonomy']['databases'])>1:
+        intro += """
+            <div style="width:48%; float:right"><p>Proportion of reads found in each databases:</p>
+        """
+        img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_dbs.png", 
+            style=" height:40%")
+        intro += img + "</div>"
 
-    intro += img
-    #<img style="height:50%;width:50%" src="outputs/proportion_kraken.png"></img><br>"""
+
+        from sequana.kraken import MultiKrakenResults2
+        k = MultiKrakenResults2(manager.samples)
+        from sequana.utils.datatables_js import DataTable
+        df = k.get_df()
+        links = ["""{}/summary.html""".format(sample) for sample in df.columns]
+        df = df.T
+        df.reset_index(inplace=True)
+        df['link'] = links
+        df = df.rename({"index": "sample"}, axis=1)
+        datatable = DataTable(df, 'kraken', index=False)
+        datatable.datatable.datatable_options = {'paging': 'false',
+                                               'buttons': ['copy', 'csv'],
+                                              'bSort': 'true',
+                                             'dom':"BRSPfrti"
+                                             }
+        datatable.datatable.set_links_to_column('link', 'sample')
+        js = datatable.create_javascript_function()
+        htmltable = datatable.create_datatable()
+        intro += """<div style="clear:both">"""+js + htmltable + "</div>"
+
 
     if os.path.exists("outputs/dendogram.info"):
         data = open("outputs/dendogram.info").readline()
         if data == "ok":
             image = SummaryModule2.png_to_embedded_png("self_dummy", "outputs/dendogram.png",
                 style="align:center; width:45%; height:45%")
+            intro += "<h2>Results clustering (kingdom-based)</h2>"
             intro += image
 
     intro +="""
-    <h2>multiqc report</h2>
-    <a href="multiqc/multiqc_report.html">multiqc report</a>
     <h2>Individual taxonomic reports</h2>
     """
 
@@ -184,7 +244,7 @@ onsuccess:
     for sample in sorted(manager.samples):
         image = SummaryModule2.png_to_embedded_png("self_dummy", 
                     "{}/kraken/kraken.png".format(sample),
-                    style="align:center; width:30%; height:30%")
+                    style="align:center; width:30%; height:30%", alt=sample)
         intro += '<a href="{}/summary.html">'.format(sample) + image + '</a>'
 
     s = SummaryModule2(data, intro=intro)
