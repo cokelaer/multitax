@@ -76,6 +76,8 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.8.7     * Update HTML report: fix the title of images. include table with DB
+            proportion. Text to explain images and reports
 0.8.6     * A better report with new features from sequana.taxonomy
 0.8.5     * fix typo in doc, factorise multiqc rule
 0.8.4     * implement the --from-project option

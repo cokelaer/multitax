@@ -30,6 +30,7 @@ __taxonomy__output_csv = '{sample}/kraken/kraken.csv'
 
 expected_output = ["outputs/dendogram.png", "multiqc/multiqc_report.html",
                    ".sequana/rulegraph.svg", "outputs/proportion_kraken.png"]
+expected_output += expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
 if len(config['sequana_taxonomy']["databases"])>1:
     expected_output += ["outputs/proportion_dbs.png"]
 
@@ -95,8 +96,6 @@ if len(config["sequana_taxonomy"]["databases"]) > 1:
             from sequana.kraken import MultiKrakenResults2
             k = MultiKrakenResults2(input, manager.samples)
             k.plot_stacked_hist(output.image, dpi=200, ytick_fontsize=11)
-
-
 
 
 
@@ -173,35 +172,37 @@ onsuccess:
     from sequana.modules_report.summary import SummaryModule2
     from sequana.modules_report.kraken import KrakenModule
     intro = """<h2>General Information</h2>{}""".format(manager.get_html_summary())
-    intro += """<div>This pipeline summarizes the taxonomic analysis 
+    intro += """<div style="width:80%">This pipeline summarizes the taxonomic analysis 
                 made on {} samples. Here below you can find a summary 
-                of the analysis. The first plot shows the proportion of 
-                reads classified by the databases in each found kingdom. 
-                If several databases are provided you should also see a 
-                plot with proportion of reads classified in each database.
+                of the analysis. The first plot (left) shows the proportion of 
+                reads classified by the databases in each found kingdom (Eukaryota,
+                Bacteria, Viruses, Archea). If several databases were used, 
+                you should also see a plot (right panel) with proportion of reads 
+                classified in each database (rather than by kingdom).
                 The per-sample analysis are made with kraken. A multi-sample 
                 report is also available as 
                 <a href="multiqc/multiqc_report.html">sequana multiqc</a> report.
-                Individual report are browsable from this page</div>""".format(len(manager.samples))
+                Individual report are browsable (Go to the <a href="#kraken">Individual taxonomic 
+                reports</a> section here below).</div>""".format(len(manager.samples))
 
     intro += """<div style="clear:both"></div>"""
     intro += """<h2>Analysis overview</h2>
         <div style="width:48%; float:left"><p>Proportion of reads in virus, bacteria, human and unclassified categories:</p>
     """
     img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png", 
-        style="max-height:60%; max-width:80%")
+        style="max-height:60%; max-width:80%", title="Kingdom proportion (and unclassified) for each sample")
     intro += img + "</div>"
     if len(config['sequana_taxonomy']['databases'])>1:
         intro += """
             <div style="width:48%; float:right"><p>Proportion of reads found in each databases:<br></p>
         """
-        img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_dbs.png", 
-                    style="max-height:60%; max-width:80%")
+        img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_dbs.png",
+                    style="max-height:60%; max-width:80%", title="DB proportion (and unclassified) per sample")
         intro += img + "</div>"
 
 
         from sequana.kraken import MultiKrakenResults2
-        k = MultiKrakenResults2(["{}/kraken/summary.json".format(x) for x in manager.samples], 
+        k = MultiKrakenResults2(["{}/kraken/summary.json".format(x) for x in manager.samples],
             manager.samples)
         from sequana.utils.datatables_js import DataTable
         df = k.get_df()
@@ -226,26 +227,32 @@ onsuccess:
         data = open("outputs/dendogram.info").readline()
         if data == "ok":
             image = SummaryModule2.png_to_embedded_png("self_dummy", "outputs/dendogram.png",
-                style="align:center; width:45%; height:45%")
+                style="align:center; width:45%; height:45%", title="Clustering of kingdom proportion (and unclassified")
             intro += "<h2>Results clustering (kingdom-based)</h2>"
+            intro += """<div style="width:80%">From the results of the classification of reads, we extract the proportion of reads in each kingdom and clusterise the data. Here below is the results of the clusterisation. The x-axis shows the sample names, the y-axis includes the kingdom. Unclassified reads are also taken into account as part of the kingdoms. </div>"""
             intro += image
 
     intro +="""
-    <h2>Individual taxonomic reports</h2>
-    """
+    <h2>Individual taxonomic reports <a id="kraken"></a></h2>
+    <div style="width:80%">Each of the sample ({} in total) was analysed independently using {} databases. Here below you can find the links towards each analysis. You can either click on the link or the image to open a new report. The report includes a table with all taxon found as well as their full lineage as provided by Kraken analysis tool. A dynamic plot based on Kroan allows you to explore the results interactively. </div>
+    """.format(len(manager.samples), len(config["sequana_taxonomy"]["databases"]))
 
+    intro += "<ul>"
     for sample in sorted(manager.samples):
-        intro += """<a href="{}/summary.html">{}/kraken</a><br>""".format(sample, sample)
+        intro += """<li><a href="{}/summary.html">{} individual report</a></li>""".format(sample, sample)
+    intro += "</ul>"
 
     data = {"name": "multitax",
             "rulegraph": __rulegraph__output,
             "stats": "stats.txt",
             #"requirements": "inputs/requirements.txt"
             }
+
+    # now include the pie images
     for sample in sorted(manager.samples):
         image = SummaryModule2.png_to_embedded_png("self_dummy", 
                     "{}/kraken/kraken.png".format(sample),
-                    style="align:center; width:30%; height:30%", alt=sample)
+                    style="align:center; width:30%; height:30%", alt=sample, title=sample)
         intro += '<a href="{}/summary.html">'.format(sample) + image + '</a>'
 
     s = SummaryModule2(data, intro=intro)
