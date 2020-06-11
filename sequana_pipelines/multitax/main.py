@@ -93,6 +93,8 @@ def main(args=None):
 
         cfg['sequana_taxonomy']['level'] = options.kraken_level
         cfg['sequana_taxonomy']['databases'] = options.databases
+        for db in options.databases:
+            manager.exists(db)
         cfg['sequana_taxonomy']['confidence'] = options.kraken_confidence
 
     # finalise the command and save it; copy the snakemake. update the config

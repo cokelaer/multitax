@@ -78,9 +78,13 @@ rule summary_plot:
     run:
         from sequana.kraken import MultiKrakenResults
         k = MultiKrakenResults(input, sample_names=sorted(manager.samples))
-        k.plot_stacked_hist(output.image, dpi=200, ytick_fontsize=11, 
+        k.plot_stacked_hist(output.image, dpi=200, 
             kind=config["summary_plot"]["kind"],
-            width=config["summary_plot"]["width"]
+            width=config["summary_plot"]["width"],
+            ytick_fontsize=config['summary_plot']["yticks_fontsize"],
+            lw=config['summary_plot']["linewidth"],
+            max_labels=config['summary_plot']["max_labels"],
+            edgecolor=config['summary_plot']["edgecolor"],
             )
         import json
         with open(output.data, "w") as fout:
@@ -88,14 +92,30 @@ rule summary_plot:
 
 if len(config["sequana_taxonomy"]["databases"]) > 1:
     __summary_plot_db__output_image = "outputs/proportion_dbs.png"
+    __summary_plot_db__output_summary = "outputs/sequana_kraken_dbs_summary.json"
     rule summary_plot_db:
         input: expand(__taxonomy__output_summary_json, sample=manager.samples)
         output:
             image=__summary_plot_db__output_image,
+            data = __summary_plot_db__output_summary
         run:
             from sequana.kraken import MultiKrakenResults2
             k = MultiKrakenResults2(input, manager.samples)
-            k.plot_stacked_hist(output.image, dpi=200, ytick_fontsize=11)
+            if len(config['summary_plot_db']["colors"]) == 0:
+                colors = None
+            else:
+                colors = config['summary_plot_db']["colors"]
+            k.plot_stacked_hist(output.image, dpi=200, 
+                ytick_fontsize=config['summary_plot_db']["yticks_fontsize"],
+                lw=config['summary_plot_db']["linewidth"],
+                max_labels=config['summary_plot_db']["max_labels"],
+                edgecolor=config['summary_plot_db']["edgecolor"],
+                alpha=config['summary_plot_db']["alpha"],
+                colors=colors,
+                cmap=config['summary_plot_db']["colormap"])
+            import json
+            with open(output.data, "w") as fout:
+                 json.dump(k.get_df().to_dict(), fout, indent=True, sort_keys=True)
 
 
 
@@ -182,24 +202,26 @@ onsuccess:
                 The per-sample analysis are made with kraken. A multi-sample 
                 report is also available as 
                 <a href="multiqc/multiqc_report.html">sequana multiqc</a> report.
-                Individual report are browsable (Go to the <a href="#kraken">Individual taxonomic 
+                Individual report are also browsable (Go to the <a href="#kraken">
+                Individual taxonomic 
                 reports</a> section here below).</div>""".format(len(manager.samples))
+
 
     intro += """<div style="clear:both"></div>"""
     intro += """<h2>Analysis overview</h2>
-        <div style="width:48%; float:left"><p>Proportion of reads in virus, bacteria, human and unclassified categories:</p>
+        <div style="width:48%; float:left"><p>Proportion of reads in virus, bacteria, human and unclassified categories is shown here below. The underlying data can be downloaded from <a href="outputs/sequana_kraken_summary.json">sequana_kraken_summary.json</a> file or here below as a CSV file.<br></p>
     """
     img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png", 
         style="max-height:60%; max-width:80%", title="Kingdom proportion (and unclassified) for each sample")
     intro += img + "</div>"
     if len(config['sequana_taxonomy']['databases'])>1:
         intro += """
-            <div style="width:48%; float:right"><p>Proportion of reads found in each databases:<br></p>
+            <div style="width:48%; float:right"><p>Proportion of reads found in each databases is shown here below. The underlying data can be found 
+in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.json</a> file or as a CSV file herebelow.<br></p>
         """
         img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_dbs.png",
                     style="max-height:60%; max-width:80%", title="DB proportion (and unclassified) per sample")
         intro += img + "</div>"
-
 
         from sequana.kraken import MultiKrakenResults2
         k = MultiKrakenResults2(["{}/kraken/summary.json".format(x) for x in manager.samples],
@@ -220,8 +242,28 @@ onsuccess:
         datatable.datatable.set_links_to_column('link', 'sample')
         js = datatable.create_javascript_function()
         htmltable = datatable.create_datatable()
-        intro += """<div style="clear:both">"""+js + htmltable + "</div>"
+        intro += """<div style="clear:both"><hr>"""+js + htmltable + "</div>"
 
+    from sequana.kraken import MultiKrakenResults
+    k = MultiKrakenResults(["{}/kraken/kraken.csv".format(x) for x in manager.samples],
+        manager.samples)
+    from sequana.utils.datatables_js import DataTable
+    df = k.get_df()
+    links = ["""{}/summary.html""".format(sample) for sample in df.columns]
+    df = df.T
+    df.reset_index(inplace=True)
+    df['link'] = links
+    df = df.rename({"index": "sample"}, axis=1)
+    datatable = DataTable(df, 'kraken_kingdom', index=False)
+    datatable.datatable.datatable_options = {'paging': 'false',
+                                               'buttons': ['copy', 'csv'],
+                                              'bSort': 'true',
+                                             'dom':"BRSPfrti"
+                                             }
+    datatable.datatable.set_links_to_column('link', 'sample')
+    js = datatable.create_javascript_function()
+    htmltable = datatable.create_datatable()
+    intro += """<div style="clear:both"><hr>"""+js + htmltable + "</div>"
 
     if os.path.exists("outputs/dendogram.info"):
         data = open("outputs/dendogram.info").readline()

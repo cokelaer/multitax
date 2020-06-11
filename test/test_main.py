@@ -8,6 +8,14 @@ from sequana.pipelines_common import get_pipeline_location as getpath
 sharedir = getpath('multitax')
 
 
+from sequana.scripts import taxonomy
+try:
+    taxonomy.main(["tst", '--download', 'toydb'])
+except:
+    pass
+
+
+
 def test_standalone_subprocess():
     directory = tempfile.TemporaryDirectory()
     cmd = """sequana_pipelines_multitax --input-directory {}  
@@ -18,9 +26,10 @@ def test_standalone_subprocess():
 def test_standalone_script():
     directory = tempfile.TemporaryDirectory()
     import sequana_pipelines.multitax.main as m
+    from sequana import sequana_config_path
     sys.argv = ["test", "--input-directory", sharedir, 
             "--working-directory", directory.name, "--force", "--databases",
-            "toydb"]
+            sequana_config_path + "/kraken_toydb"]
     m.main()
 
 def test_full():

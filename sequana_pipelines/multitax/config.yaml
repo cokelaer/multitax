@@ -28,6 +28,21 @@ sequana_taxonomy:
 summary_plot:
     kind: barh
     width: 1
+    yticks_fontsize: 11
+    linewidth: 2
+    max_labels: 50
+    edgecolor: "black"
+
+summary_plot_db:
+    kind: barh
+    width: 1
+    yticks_fontsize: 11
+    linewidth: 2
+    colormap: hot_r
+    colors: 
+    max_labels: 50
+    edgecolor: "black"
+    alpha: 0.8
 
 multiqc:
     indir: .

@@ -45,10 +45,49 @@ mapping:
     "summary_plot":
         type: map
         mapping:
-            "kind": 
+            "kind":
                 type: str
                 enum: [bar, barh]
-            "width": 
+            "width":
                 type: float
                 range: { min: 0, max: 1}
+            "yticks_fontsize":
+                type: int
+            "linewidth":
+                type: int
+                range: { min: 0}
+            "edgecolor":
+                type: str
+            "max_labels":
+                type: int
+                range: { min: 0, max: 100}
+
+
+    "summary_plot_db":
+        type: map
+        mapping:
+            "kind":
+                type: str
+                enum: [bar, barh]
+            "width":
+                type: float
+                range: { min: 0, max: 1}
+            "yticks_fontsize":
+                type: int
+            "edgecolor":
+                type: str
+            "linewidth":
+                type: int
+                range: { min: 0}
+            "max_labels":
+                type: int
+                range: { min: 0, max: 100}
+            "colormap":
+                type: str
+            "colors":
+                type: any
+            "alpha":
+                type: float
+                range: { min: 0, max: 1}
+
 
