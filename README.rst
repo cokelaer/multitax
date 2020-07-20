@@ -50,12 +50,32 @@ Requirements
 
 This pipelines requires the following executable(s):
 
-- kraken
-- kraken2
+- kraken and/or kraken2
 - sequana_taxonomy
 
 
+You cannot install both kraken1 and kraken2 together. We recommende to use the
+latest version::
+
+    conda install kraken2
+
 .. image:: https://raw.githubusercontent.com/sequana/sequana_multitax/master/sequana_pipelines/multitax/dag.png
+
+
+You can download databases from kraken website. We provide some databases on
+github.com/sequana/resources. You can download a toy database as follows::
+
+    sequana_taxonomy --download toydb
+
+A more complete database is available here::
+
+    sequana_taxonomy --download kraken_db1
+
+The first time, a taxonomic database will be downloaded and stored locally in
+.config/sequana/taxonomy.data file. You can updateit from time to time using::
+
+    sequana_taxonomy --update-taxonomy
+
 
 Details
 ~~~~~~~~~
