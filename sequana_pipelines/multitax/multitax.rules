@@ -30,7 +30,7 @@ __taxonomy__output_csv = '{sample}/kraken/kraken.csv'
 
 expected_output = ["outputs/dendogram.png", "multiqc/multiqc_report.html",
                    ".sequana/rulegraph.svg", "outputs/proportion_kraken.png"]
-expected_output += expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
+#expected_output += expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
 if len(config['sequana_taxonomy']["databases"])>1:
     expected_output += ["outputs/proportion_dbs.png"]
 
@@ -78,7 +78,7 @@ rule summary_plot:
     run:
         from sequana.kraken import MultiKrakenResults
         k = MultiKrakenResults(input, sample_names=sorted(manager.samples))
-        k.plot_stacked_hist(output.image, dpi=200, 
+        k.plot_stacked_hist(output.image, dpi=200,
             kind=config["summary_plot"]["kind"],
             width=config["summary_plot"]["width"],
             ytick_fontsize=config['summary_plot']["yticks_fontsize"],
@@ -105,7 +105,7 @@ if len(config["sequana_taxonomy"]["databases"]) > 1:
                 colors = None
             else:
                 colors = config['summary_plot_db']["colors"]
-            k.plot_stacked_hist(output.image, dpi=200, 
+            k.plot_stacked_hist(output.image, dpi=200,
                 ytick_fontsize=config['summary_plot_db']["yticks_fontsize"],
                 lw=config['summary_plot_db']["linewidth"],
                 max_labels=config['summary_plot_db']["max_labels"],
@@ -192,18 +192,18 @@ onsuccess:
     from sequana.modules_report.summary import SummaryModule2
     from sequana.modules_report.kraken import KrakenModule
     intro = """<h2>General Information</h2>{}""".format(manager.get_html_summary())
-    intro += """<div style="width:80%">This pipeline summarizes the taxonomic analysis 
-                made on {} samples. Here below you can find a summary 
-                of the analysis. The first plot (left) shows the proportion of 
+    intro += """<div style="width:80%">This pipeline summarizes the taxonomic analysis
+                made on {} samples. Here below you can find a summary
+                of the analysis. The first plot (left) shows the proportion of
                 reads classified by the databases in each found kingdom (Eukaryota,
-                Bacteria, Viruses, Archea). If several databases were used, 
-                you should also see a plot (right panel) with proportion of reads 
+                Bacteria, Viruses, Archea). If several databases were used,
+                you should also see a plot (right panel) with proportion of reads
                 classified in each database (rather than by kingdom).
-                The per-sample analysis are made with kraken. A multi-sample 
-                report is also available as 
+                The per-sample analysis are made with kraken. A multi-sample
+                report is also available as
                 <a href="multiqc/multiqc_report.html">sequana multiqc</a> report.
                 Individual report are also browsable (Go to the <a href="#kraken">
-                Individual taxonomic 
+                Individual taxonomic
                 reports</a> section here below).</div>""".format(len(manager.samples))
 
 
@@ -211,12 +211,12 @@ onsuccess:
     intro += """<h2>Analysis overview</h2>
         <div style="width:48%; float:left"><p>Proportion of reads in virus, bacteria, human and unclassified categories is shown here below. The underlying data can be downloaded from <a href="outputs/sequana_kraken_summary.json">sequana_kraken_summary.json</a> file or here below as a CSV file.<br></p>
     """
-    img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png", 
+    img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png",
         style="max-height:60%; max-width:80%", title="Kingdom proportion (and unclassified) for each sample")
     intro += img + "</div>"
     if len(config['sequana_taxonomy']['databases'])>1:
         intro += """
-            <div style="width:48%; float:right"><p>Proportion of reads found in each databases is shown here below. The underlying data can be found 
+            <div style="width:48%; float:right"><p>Proportion of reads found in each databases is shown here below. The underlying data can be found
 in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.json</a> file or as a CSV file herebelow.<br></p>
         """
         img = SummaryModule2.png_to_embedded_png("dummy_self", "outputs/proportion_dbs.png",
@@ -284,15 +284,17 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
         intro += """<li><a href="{}/summary.html">{} individual report</a></li>""".format(sample, sample)
     intro += "</ul>"
 
+    from sequana_pipelines import multitax
     data = {"name": "multitax",
             "rulegraph": __rulegraph__output,
             "stats": "stats.txt",
+            "pipeline_version": multitax.version
             #"requirements": "inputs/requirements.txt"
             }
 
     # now include the pie images
     for sample in sorted(manager.samples):
-        image = SummaryModule2.png_to_embedded_png("self_dummy", 
+        image = SummaryModule2.png_to_embedded_png("self_dummy",
                     "{}/kraken/kraken.png".format(sample),
                     style="align:center; width:30%; height:30%", alt=sample, title=sample)
         intro += '<a href="{}/summary.html">'.format(sample) + image + '</a>'

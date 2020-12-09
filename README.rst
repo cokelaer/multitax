@@ -104,12 +104,14 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
-0.8.8     * fix plot summary dbs (sample names). Add options in schema+config
+0.9.0     * fix plot summary dbs (sample names). Add options in schema+config
             file to tune the image if required.
           * HTML now includes links towards data that generates the top plots
           * fix case where zero sequences are found
           * check existence of input databases
           * add the --run argument
+          * add multitax version in the header
+          * add search box (Sequana feature) in the CSV tables
 0.8.7     * Update HTML report: fix the title of images. include table with DB
             proportion. Text to explain images and reports
 0.8.6     * A better report with new features from sequana.taxonomy
