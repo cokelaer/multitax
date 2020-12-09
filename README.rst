@@ -61,7 +61,6 @@ latest version::
 
 .. image:: https://raw.githubusercontent.com/sequana/multitax/master/sequana_pipelines/multitax/dag.png
 
-
 You can download databases from kraken website. We provide some databases on
 https://github.com/sequana/resources. You can download a toy database as follows::
 
@@ -84,7 +83,8 @@ Colors correspond to a kingdom (green for viruses). If you click on the image,
 you will be redirect to a more precise pie chart base on Krona pie chart, which
 is more interactive.
 
-.. image:: https://raw.githubusercontent.com/sequana/multitax/master/sequana_pipelines/multitax/doc/images/piechart.png
+.. image:: https://raw.githubusercontent.com/sequana/multitax/master/doc/images/piechart.png
+
 
 The analysis is enterily based on Kraken tool. If several databases are
 provided, they are run sequentially. This requires a careful interpretation of
