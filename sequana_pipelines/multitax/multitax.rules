@@ -262,7 +262,7 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
                                              }
     datatable.datatable.set_links_to_column('link', 'sample')
     js = datatable.create_javascript_function()
-    htmltable = datatable.create_datatable()
+    htmltable = datatable.create_datatable(float_format="%0.3f")
     intro += """<div style="clear:both"><hr>"""+js + htmltable + "</div>"
 
     if os.path.exists("outputs/dendogram.info"):

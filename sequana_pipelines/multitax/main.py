@@ -1,6 +1,23 @@
+# -*- coding: utf-8 -*-
+#
+#  This file is part of Sequana software
+#
+#  Copyright (c) 2016 - Sequana Development Team
+#
+#  File author(s):
+#      Thomas Cokelaer <thomas.cokelaer@pasteur.fr>
+#
+#  Distributed under the terms of the 3-clause BSD license.
+#  The full license is in the LICENSE file, distributed with this software.
+#
+#  website: https://github.com/sequana/sequana
+#  documentation: http://sequana.readthedocs.io
+#
+##############################################################################
 import sys
 import os
 import argparse
+import subprocess
 
 from sequana_pipetools.options import *
 from sequana_pipetools.misc import Colors
@@ -45,6 +62,10 @@ class Options(argparse.ArgumentParser):
                 standaline to download some. You may use several, in which case, an
                 iterative taxonomy is performed as explained in online sequana
                 documentation. You may mix kraken1 and kraken2 databases""")
+
+        self.add_argument("--run", default=False, action="store_true",
+            help="execute the pipeline directly")
+
 
     def parse_args(self, *args):
         args_list = list(*args)
@@ -101,6 +122,8 @@ def main(args=None):
     # file and save it.
     manager.teardown()
 
+    if options.run:
+        subprocess.Popen(["sh", '{}.sh'.format(NAME)], cwd=options.workdir)
 
 if __name__ == "__main__":
     main()
