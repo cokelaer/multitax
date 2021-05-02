@@ -104,6 +104,8 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.9.2    * add --update-taxonomy DB option
+          * add --store-unclassified option
 0.9.1     * fix a logger issue 
 0.9.0     * fix plot summary dbs (sample names). Add options in schema+config
             file to tune the image if required.

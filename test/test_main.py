@@ -32,23 +32,10 @@ def test_standalone_script():
             sequana_config_path + "/kraken_toydb"]
     m.main()
 
-def test_full():
-
-    with tempfile.TemporaryDirectory() as directory:
-        wk = directory
-        print(sharedir)
-        cmd = 'sequana_pipelines_multitax --input-directory {} --input-pattern E*fastq.gz'
-        cmd += ' --working-directory {}  --force --databases toydb '
-        cmd = cmd.format(sharedir , wk)
-        subprocess.call(cmd.split())
-
-        stat = subprocess.call("sh multitax.sh".split(), cwd=wk)
-        print(os.listdir(wk))
-
-        assert os.path.exists(wk + "/multiqc/multiqc_report.html")
 
 
 def test_version():
     cmd = "sequana_pipelines_multitax --version"
     subprocess.call(cmd.split())
+
 

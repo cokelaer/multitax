@@ -1,14 +1,16 @@
-"""multitax pipeline
-
-Author: Thomas Cokelaer
-Affiliation: Institut Pasteur @ 2019
-
-This pipeline is part of Sequana software (sequana.readthedocs.io)
-
-snakemake -s multitax.rules --forceall --stats stats.txt --cores 4
-
-
-"""
+# -*- coding: utf-8 -*-
+#
+#  This file is part of Sequana software
+#
+#  Copyright (c) 2016-2021 - Sequana Dev Team (https://sequana.readthedocs.io)
+#
+#  Distributed under the terms of the 3-clause BSD license.
+#  The full license is in the LICENSE file, distributed with this software.
+#
+#  Website:       https://github.com/sequana/sequana
+#  Documentation: http://sequana.readthedocs.io
+#  Contributors:  https://github.com/sequana/sequana/graphs/contributors
+##############################################################################
 import sequana
 from sequana import snaketools as sm
 from sequana import sequana_data
@@ -30,9 +32,10 @@ __taxonomy__output_csv = '{sample}/kraken/kraken.csv'
 
 expected_output = ["outputs/dendogram.png", "multiqc/multiqc_report.html",
                    ".sequana/rulegraph.svg", "outputs/proportion_kraken.png"]
-#expected_output += expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
-if len(config['sequana_taxonomy']["databases"])>1:
+
+if len(config['sequana_taxonomy']["databases"]) > 1:
     expected_output += ["outputs/proportion_dbs.png"]
+
 
 
 rule all:
@@ -63,6 +66,12 @@ rule sequana_taxonomy:
                 assert os.path.exists(this), "databases {} does not exits".format(this)
             cmd += " {} ".format(this)
         cmd += " --output-directory {} --level {}".format(wildcards.sample, config['sequana_taxonomy']['level'])
+        if config['sequana_taxonomy']['store_unclassified']:
+            if len(input) == 2:
+                cmd += " --unclassified-out unclassified_#.fastq".format(wildcards.sample)
+            else:
+                cmd += " --unclassified-out unclassified.fastq".format(wildcards.sample)
+        cmd += config['sequana_taxonomy']['options']
 
         shell(cmd)
 
@@ -289,7 +298,6 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
             "rulegraph": __rulegraph__output,
             "stats": "stats.txt",
             "pipeline_version": multitax.version
-            #"requirements": "inputs/requirements.txt"
             }
 
     # now include the pie images

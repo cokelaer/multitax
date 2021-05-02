@@ -26,6 +26,10 @@ mapping:
             "confidence":
                 type: float
                 range: { min: 0, max: 1}
+            "options":
+                 type: str
+            "store_unclassified":
+                type: bool
 
     "multiqc":
         type: map

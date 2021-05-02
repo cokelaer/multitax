@@ -23,7 +23,8 @@ sequana_taxonomy:
         - 
     level: DEBUG
     confidence: 0
-
+    store_unclassified: true
+    options: ""
 
 summary_plot:
     kind: barh

@@ -51,20 +51,26 @@ class Options(argparse.ArgumentParser):
 
         pipeline_group = self.add_argument_group("pipeline")
 
+        pipeline_group.add_argument('--update-taxonomy', action="store_true", 
+            help="""To set the lineage of taxon ID, you need to update the taxonomic 
+                DB used internally from time to time. """)
+
         pipeline_group.add_argument('--kraken-level', dest="kraken_level",
             default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         pipeline_group.add_argument('--kraken-confidence', dest="kraken_confidence",
-            type=float, 
-            default=0, help="""confidence parameter used with kraken2 databases only""")
+            type=float,
+            default=0.05, help="""confidence parameter used with kraken2 databases only""")
         pipeline_group.add_argument("--databases", dest="databases", type=str,
-            nargs="+", required=True, 
+            nargs="+", required="--update-taxonomy" not in sys.argv,
             help="""Path to a valid Kraken database(s). See sequana_taxonomy
                 standaline to download some. You may use several, in which case, an
                 iterative taxonomy is performed as explained in online sequana
                 documentation. You may mix kraken1 and kraken2 databases""")
-
+        pipeline_group.add_argument("--store-unclassified", default=False, action="store_true",
+            help="Unclassified reads are stored in the output directories")
         self.add_argument("--run", default=False, action="store_true",
             help="execute the pipeline directly")
+
 
 
     def parse_args(self, *args):
@@ -81,11 +87,11 @@ class Options(argparse.ArgumentParser):
         return options
 
 
-
 def main(args=None):
 
     if args is None:
         args = sys.argv
+
 
     # whatever needs to be called by all pipeline before the options parsing
     from sequana_pipetools.options import before_pipeline
@@ -94,6 +100,10 @@ def main(args=None):
     # option parsing including common epilog
     options = Options(NAME, epilog=sequana_epilog).parse_args(args[1:])
 
+    if options.update_taxonomy:
+        cmd = "sequana_taxonomy --update-taxonomy"
+        subprocess.Popen(cmd.split(), shell=True)
+        sys.exit(0)
 
     from sequana.pipelines_common import SequanaManager
 
@@ -117,6 +127,7 @@ def main(args=None):
         for db in options.databases:
             manager.exists(db)
         cfg['sequana_taxonomy']['confidence'] = options.kraken_confidence
+        cfg['sequana_taxonomy']['store_unclassified'] = options.store_unclassified
 
     # finalise the command and save it; copy the snakemake. update the config
     # file and save it.
