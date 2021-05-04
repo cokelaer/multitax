@@ -102,7 +102,8 @@ def main(args=None):
 
     if options.update_taxonomy:
         cmd = "sequana_taxonomy --update-taxonomy"
-        subprocess.Popen(cmd.split(), shell=True)
+        p = subprocess.Popen(cmd.split())
+        p.wait()
         sys.exit(0)
 
     from sequana.pipelines_common import SequanaManager
