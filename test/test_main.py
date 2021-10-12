@@ -3,10 +3,11 @@ import os
 import tempfile
 import subprocess
 import sys
-from sequana.pipelines_common import get_pipeline_location as getpath
+#from sequana.pipelines_common import get_pipeline_location as getpath
+#sharedir = getpath('multitax')
+from . import test_dir
 
-sharedir = getpath('multitax')
-
+sharedir = f"{test_dir}/data" 
 
 from sequana.scripts import taxonomy
 try:

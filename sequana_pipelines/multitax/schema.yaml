@@ -31,6 +31,12 @@ mapping:
             "store_unclassified":
                 type: bool
 
+    "blast":
+        type: map
+        mapping:
+          "do":
+            type: bool
+
     "multiqc":
         type: map
         mapping:

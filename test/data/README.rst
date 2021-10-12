@@ -4,3 +4,10 @@ reads into a single file data.fastq
 
 The directory krakendb is a simple databases made of only one single sequence
 (K01711)
+
+https://www.ncbi.nlm.nih.gov/nuccore/AP018562
+
+
+to build DB::
+
+    makeblastdb  -in input.fasta -dbtype nucl -out temp

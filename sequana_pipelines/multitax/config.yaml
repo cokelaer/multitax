@@ -26,6 +26,18 @@ sequana_taxonomy:
     store_unclassified: true
     options: ""
 
+
+##############################################################################
+# sblast
+#
+# :Parameters:
+#
+# - database: expect the BLASTDB environment variable to be define
+blast:
+    do: false
+    nreads: 1000
+    database: nt 
+
 summary_plot:
     kind: barh
     width: 1

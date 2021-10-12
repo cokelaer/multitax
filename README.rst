@@ -30,7 +30,18 @@ Usage
 For the database, you will need to provide your own databases. You can check out
 the documentation of kraken. The toydb here above is shipped with sequana and
 should work for demo. See sequana_taxonomy standalone for more help and
-information. You can also checkout the sequana documentation (kraken module) 
+information. You can also checkout the sequana documentation (kraken module).
+
+
+The Kraken final report and blast analysis (if set) will need a taxonomic file
+stored in the sequana config directory (HOME/.config/sequana/taxonomy.dat). If
+not already done, type this command::
+
+    sequana_multitax --update-taxonomy
+
+You may need to call this command from time to time if unknown taxon appears in
+the HTML reports.
+
 
 This creates a directory with the pipeline and configuration file. You will then need 
 to execute the pipeline::
