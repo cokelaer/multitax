@@ -45,13 +45,6 @@ mapping:
           "database":
             type: str
 
-    "multiqc":
-        type: map
-        mapping:
-            "options":
-                type: str
-            "indir":
-                type: str
 
     "multiqc":
         type: map
