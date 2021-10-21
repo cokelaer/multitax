@@ -30,12 +30,20 @@ mapping:
                  type: str
             "store_unclassified":
                 type: bool
+            "threads":
+              type: int
+              range: { min: 1 }
+
 
     "blast":
         type: map
         mapping:
           "do":
             type: bool
+          "nreads":
+            type: int
+          "database":
+            type: str
 
     "multiqc":
         type: map
@@ -44,6 +52,20 @@ mapping:
                 type: str
             "indir":
                 type: str
+
+    "multiqc":
+        type: map
+         mapping:
+            "options":
+                type: str
+            "modules":
+                type: str
+            "config_file":
+                type: str
+            "input_directory":
+                type: str
+
+
 
     "dendogram":
         type: map
