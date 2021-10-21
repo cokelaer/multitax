@@ -101,9 +101,11 @@ rule sequana_taxonomy:
                 cmd += " --unclassified-out unclassified_#.fastq"  # this syntax replaces # with 1 and 2
             else:
                 cmd += " --unclassified-out unclassified.fastq"
-        else:
-            shell(f"touch {output.unclassified}")
         cmd += config['sequana_taxonomy']['options']
+
+        # even tough we do not save the unclassified, we want to create a dummy 
+        # file since this ouptut file is expected.
+        cmd += f" && touch {output.unclassified}"
 
         shell(cmd)
 
