@@ -131,6 +131,7 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.10.1    * fix blast run when no taxid is found and HTML report
 0.10.0    * uses new sequana wrappers and framework
           * add ability to run blast on unclassified reads
           * handle case of empty FastQ files

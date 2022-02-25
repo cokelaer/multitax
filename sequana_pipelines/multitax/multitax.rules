@@ -81,7 +81,7 @@ rule sequana_taxonomy:
     run:
         outdir = output.html.split("/",1)[0]
         cmd = "sequana_taxonomy --file1 {input[0]} "
-        if manager.paired == 2:
+        if manager.paired:
             cmd += " --file2 {input[1]} "
 
         if config["sequana_taxonomy"]["confidence"] != 0:
@@ -97,7 +97,7 @@ rule sequana_taxonomy:
         # we will save the unclassified files whatsover
         if config['sequana_taxonomy']['store_unclassified']:
             if manager.paired:
-                cmd += " --unclassified-out unclassified_#.fastq"  # this syntax replaces # with 1 and 2
+                cmd += " --unclassified-out unclassified#.fastq"  # this syntax replaces # with 1 and 2
             else:
                 cmd += " --unclassified-out unclassified.fastq"
         cmd += config['sequana_taxonomy']['options']

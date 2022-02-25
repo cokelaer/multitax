@@ -131,21 +131,21 @@ def taxidstolineage(taxid_set):
     TAXID = read_taxonomy()
 
     # On reconstruit le lineage complet pour chaque taxid
+    head_ranks = (
+        "strain",
+        "species",
+        "genus",
+        "family",
+        "order",
+        "class",
+        "phylum",
+        "superkingdom",
+    )  # Peut se modifier en fonction de ce que l'on veut
+
     for taxid in taxid_set:
 
-        head_ranks = (
-            "strain",
-            "species",
-            "genus",
-            "family",
-            "order",
-            "class",
-            "phylum",
-            "superkingdom",
-        )  # Peut se modifier en fonction de ce que l'on veut
-
-        if taxid == "None":
-            TAXID2LIN["None"] = ["None"] * 16
+        if taxid not in TAXID or taxid is None:
+            TAXID2LIN[taxid] = ["None"] * 16
         elif taxid == "nan":
             TAXID2LIN["nan"] = ["None"] * 16
         else:
