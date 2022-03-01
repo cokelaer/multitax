@@ -63,7 +63,7 @@ else:
 def get_sequana_taxonomy_unclassified():
 
     if manager.paired:
-        return "{sample}/kraken/unclassified_1.fastq"
+        return "{sample}/kraken/unclassified1.fastq"
     else:
         return "{sample}/kraken/unclassified.fastq"
 
