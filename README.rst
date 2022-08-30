@@ -41,6 +41,11 @@ A third option is to install the pipeline with pip method (see above) and use si
 Usage
 ~~~~~
 
+In order to use this pipeline, you will need Kraken databases. Please see Kraken pages for help.
+
+We will also need a taxonomic databases. In principle this pipeline will download the file in your home, in 
+/home/user/.config/sequana/taxonomy.dat one for all. Note, that with singularity, this file will be downloaded locally in your working directory for each analysis,except if it is found in your home, in which case a simple copy is performed.
+
 ::
 
     sequana_multitax --help

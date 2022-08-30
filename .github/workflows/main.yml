@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - fix_classified
   pull_request:
     branches-ignore: []
   schedule:
