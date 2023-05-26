@@ -24,6 +24,7 @@ jobs:
     - name: install graphviz
       run: |
         sudo apt-get install -y graphviz
+        sudo apt-get install libopenblas-dev # for scipy
 
     - name: checkout git repo
       uses: actions/checkout@v2
