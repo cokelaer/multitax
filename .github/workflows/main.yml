@@ -44,10 +44,6 @@ jobs:
       run: |
         pip install .
 
-    - name: conda
-      run: |
-        conda install -c conda-forge -c bioconda --quiet -y python=${{ matrix.python }} kraken2 krona
-
     - name: Install dependencies
       shell: bash -el {0}
       run: |
