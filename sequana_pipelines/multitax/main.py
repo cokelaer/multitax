@@ -17,6 +17,7 @@
 import sys
 import os
 import subprocess
+import ast
 
 import rich_click as click
 import click_completion
@@ -56,16 +57,6 @@ def check_exists(filename, logger, exit_on_error=True, warning_only=False):
     return True
 
 
-# callback for --databases multiple arguments
-def parse_databases(ctx, param, value):
-    if value is not None:
-        if "," in value:
-            return tuple(value.split(','))
-        elif " " in value.strip():
-            return tuple(value.split())
-        else:
-            return value,
-
 
 # callback for --update-taxonomy option
 def update_taxonomy(ctx, param, value):
@@ -76,6 +67,18 @@ def update_taxonomy(ctx, param, value):
        sys.exit(0)
     return value
 
+
+# callback for --databases multiple arguments
+def check_databases(ctx, param, value):
+    if value:
+        # click transform the input databases  (tuple) into a string
+        # we need to convert it back to a tuple before checking the databases
+        values = ast.literal_eval(value)
+        for db in values:
+            if not os.path.exists(db):
+                logger.error(f"{db} does not exists. Check its path name")
+                sys.exit(1)
+    return ast.literal_eval(value)
 
 @click.command(context_settings=help)
 @include_options_from(ClickSnakemakeOptions, working_directory=NAME)
@@ -94,7 +97,8 @@ def update_taxonomy(ctx, param, value):
     help="""confidence parameter used with kraken2 databases only""")
 @click.option("--databases", "databases",
     type=click.STRING,
-    callback=parse_databases,
+    cls=OptionEatAll,
+    callback=check_databases,
     required="--update-taxonomy" not in sys.argv,
     help="""Path to a valid Kraken database(s). See sequana_taxonomy
             standaline to download some. You may use several, in which case, an

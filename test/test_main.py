@@ -27,6 +27,11 @@ def test_standalone_script():
 "--databases", krakendb])
     assert results.exit_code == 0
 
+    # 2 databases
+    runner = CliRunner()
+    results = runner.invoke(main, ["--input-directory", sharedir, "--working-directory", directory.name, "--force",
+"--databases", krakendb, krakendb])
+    assert results.exit_code == 0
 
 
 def test_version():
