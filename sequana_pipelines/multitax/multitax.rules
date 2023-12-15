@@ -121,7 +121,7 @@ rule sequana_taxonomy:
         level=config["sequana_taxonomy"].get("level", "INFO"),
         options=config["sequana_taxonomy"].get("options", "")
     container:
-        config["apptainers"]["sequana"]
+        config["apptainers"]["sequana_tools"]
     wrapper:
         f"{manager.wrappers}/wrappers/sequana_taxonomy"
 

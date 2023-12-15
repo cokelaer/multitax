@@ -4,7 +4,7 @@
 
 
 .. image:: https://github.com/sequana/multitax/actions/workflows/main.yml/badge.svg
-   :target: https://github.com/sequana/multitax/actions/workflows/main.yaml 
+   :target: https://github.com/sequana/multitax/actions/workflows/main.yaml
 
 .. image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C3.10-blue.svg
     :target: https://pypi.python.org/pypi/sequana
@@ -36,7 +36,7 @@ Usage
 
 In order to use this pipeline, you will need Kraken databases. Please see Kraken pages for help.
 
-We will also need a taxonomic databases. In principle this pipeline will download the file in your home, in 
+We will also need a taxonomic databases. In principle this pipeline will download the file in your home, in
 /home/user/.config/sequana/taxonomy.dat one for all. Note, that with singularity, this file will be downloaded locally in your working directory for each analysis,except if it is found in your home, in which case a simple copy is performed.
 
 ::
@@ -60,13 +60,13 @@ You may need to call this command from time to time if unknown taxon appears in
 the HTML reports.
 
 
-This creates a directory with the pipeline and configuration file. You will then need 
+This creates a directory with the pipeline and configuration file. You will then need
 to execute the pipeline::
 
     cd multitax
     sh multitax.sh  # for a local run
 
-This launch a snakemake pipeline. If you are familiar with snakemake, you can 
+This launch a snakemake pipeline. If you are familiar with snakemake, you can
 retrieve the pipeline itself and its configuration files and then execute the pipeline yourself with specific parameters::
 
     snakemake -s multitax.rules -c config.yaml --cores 4 --stats stats.txt
@@ -121,7 +121,7 @@ The first time, a taxonomic database will be downloaded and stored locally in
 Details
 ~~~~~~~~~
 
-This pipeline runs **sequana_taxonomy** (based on kraken) in parallel on the input fastq files (paired or not). 
+This pipeline runs **sequana_taxonomy** (based on kraken) in parallel on the input fastq files (paired or not).
 A brief sequana summary report is also produced. For each sample, a HTML page is
 reported with the following kind of image. This pie chart is a static image
 summarizing the species found in your sample. Unclassified reads are in grey.
@@ -134,14 +134,14 @@ is more interactive.
 The analysis is enterily based on Kraken tool. If several databases are
 provided, they are run sequentially. This requires a careful interpretation of
 the results. Indeed analysing data with viruses then bacteria may give different
-results as compare to analysing with bacteria then viruses. 
+results as compare to analysing with bacteria then viruses.
 
 
 Rules and configuration details
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/multitax/main/sequana_pipelines/multitax/config.yaml>`_
-to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file. 
+to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file.
 
 Changelog
 ~~~~~~~~~
@@ -149,6 +149,11 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.12.2    * rollback apptainer for sequana_taxonomy to the apptainer
+            sequana_tools
+          * Fix version of sequana_wrappers to v23.12.5
+          * add precommit
+0.12.1    * update apptainers
 0.12.0    * Refactor to use new Click framework
 0.11.1    * add missing import in the main script
           * add wrapper version in config
@@ -162,7 +167,7 @@ Version   Description
           * handle case of empty FastQ files
 0.9.2     * add --update-taxonomy DB option
           * add --store-unclassified option
-0.9.1     * fix a logger issue 
+0.9.1     * fix a logger issue
 0.9.0     * fix plot summary dbs (sample names). Add options in schema+config
             file to tune the image if required.
           * HTML now includes links towards data that generates the top plots
@@ -179,10 +184,8 @@ Version   Description
 0.8.3     * add the confidence option in sequana_taxonomy rule
           * improve html report
           * uses new sequana framework to speed up --help calls
-0.8.2     * less stringent on requirements (mode warning)  
+0.8.2     * less stringent on requirements (mode warning)
           * fix input of the multiqc rule
 0.8.1     Fix requirements.
 0.8.0     **First release.**
 ========= ====================================================================
-
-

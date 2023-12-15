@@ -5,7 +5,7 @@
 # If input_directory provided, use it otherwise if input_pattern provided,
 # use it, otherwise use input_samples.
 # ============================================================================
-sequana_wrappers: "v23.11.28"
+sequana_wrappers: "v23.12.5"
 
 
 input_directory: 
@@ -16,7 +16,6 @@ apptainers:
     sequana_tools: "https://zenodo.org/record/7963917/files/sequana_tools_0.15.1.img"
     graphviz: "https://zenodo.org/record/7928262/files/graphviz_7.0.5.img"
     multiqc: "https://zenodo.org/record/10205070/files/multiqc_1.16.0.img"
-    sequana: "https://zenodo.org/record/10258126/files/sequana_0.16.2.img"
 
 ##############################################################################
 # sequana_taxonomy
