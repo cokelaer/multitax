@@ -250,7 +250,8 @@ if manager.config.multiqc.config_file:
 
 rule multiqc:
     input:
-        expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples))
+        expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples)),
+        expand("{sample}/kraken/summary.json", sample=sorted(manager.samples))
     output:
        "multiqc/multiqc_report.html"
     params:
