@@ -121,7 +121,8 @@ rule sequana_taxonomy:
         level=config["sequana_taxonomy"].get("level", "INFO"),
         options=config["sequana_taxonomy"].get("options", "")
     container:
-        config["apptainers"]["sequana_tools"]
+        # this container must have sequana + kraken2 (for sequana_taxonomy)
+        config["apptainers"]["sequana"]
     wrapper:
         f"{manager.wrappers}/wrappers/sequana_taxonomy"
 
@@ -250,8 +251,7 @@ if manager.config.multiqc.config_file:
 
 rule multiqc:
     input:
-        expand("{sample}/kraken/kraken.csv", sample=sorted(manager.samples)),
-        expand("{sample}/kraken/summary.json", sample=sorted(manager.samples))
+        "outputs/sequana_kraken_summary.json"
     output:
        "multiqc/multiqc_report.html"
     params:
@@ -261,7 +261,9 @@ rule multiqc:
         modules=config['multiqc']['modules']
     log:
         "multiqc/multiqc.log"
+    threads: 1
     container:
+        # must contain multiqc + sequana multiqc plugins
         config["apptainers"]["multiqc"]
     wrapper:
        f"{manager.wrappers}/wrappers/multiqc"
@@ -403,6 +405,12 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
         intro += """<li><a href="{}/summary.html">{} individual report</a></li>""".format(sample, sample)
     intro += "</ul>"
 
+    from sequana_pipelines import multitax
+    data = {"name": "multitax",
+            "rulegraph": ".sequana/rulegraph.svg",
+            "stats": "stats.txt",
+            "pipeline_version": multitax.version
+            }
 
     # now include the pie images
     for sample in sorted(manager.samples):
@@ -410,6 +418,17 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
                     "{}/kraken/kraken.png".format(sample),
                     style="align:center; width:30%; height:30%", alt=sample, title=sample)
         intro += '<a href="{}/summary.html">'.format(sample) + image + '</a>'
+
+    # Now the final report. add the original command in the HTML report
+    try:
+        command = ""
+        with open(".sequana/info.txt", "r") as fin:
+            for line in fin:
+                if not line.startswith("#"):
+                     command += line
+        intro += f"<h2>Command used</h2>{command}"
+    except Exception:
+        pass
 
     data = manager.getmetadata()
     s = SequanaReport(data, intro=intro)

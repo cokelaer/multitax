@@ -16,6 +16,7 @@ apptainers:
     sequana_tools: "https://zenodo.org/record/7963917/files/sequana_tools_0.15.1.img"
     graphviz: "https://zenodo.org/record/7928262/files/graphviz_7.0.5.img"
     multiqc: "https://zenodo.org/record/10205070/files/multiqc_1.16.0.img"
+    sequana: "https://zenodo.org/record/10460105/files/sequana_0.16.5.img"
 
 ##############################################################################
 # sequana_taxonomy
@@ -28,7 +29,7 @@ sequana_taxonomy:
         -
     level: INFO
     confidence: 0
-    store_unclassified: true
+    store_unclassified: false
     options: ""
     threads: 4
 

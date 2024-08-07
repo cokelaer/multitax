@@ -149,10 +149,10 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
-0.12.2    * rollback apptainer for sequana_taxonomy to the apptainer
-            sequana_tools
+0.12.2    * switch apptainer for sequana_taxonomy to the apptainer sequana
           * Fix version of sequana_wrappers to v23.12.5
           * add precommit
+          * Fix dag to fix multiqc when using apptainers
 0.12.1    * update apptainers
 0.12.0    * Refactor to use new Click framework
 0.11.1    * add missing import in the main script

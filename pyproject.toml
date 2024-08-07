@@ -37,6 +37,7 @@ python = ">=3.8,<4.0"
 sequana = ">=0.16.2"
 sequana_pipetools = ">=0.16.4"
 click-completion = "^0.5.2"
+pulp = "^2.9.0"
 
 
 [tool.poetry.scripts]
