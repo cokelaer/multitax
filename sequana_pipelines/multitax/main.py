@@ -109,6 +109,13 @@ def check_databases(ctx, param, value):
     is_flag=True,
     help="""blast unclassified read from kraken. Requires a local Blast DB and --stored-unclassified""",
 )
+@click.option(
+    "--keep-kraken-output",
+    default=False,
+    show_default=True,
+    is_flag=True,
+    help="""By default kraken output are deleted (to save space). use this flag to keep these files.""",
+)
 def main(**options):
 
     if options["from_project"]:
@@ -140,6 +147,7 @@ def main(**options):
 
     def fill_store_unclassified():
         cfg["sequana_taxonomy"]["store_unclassified"] = options["store_unclassified"]
+        cfg["sequana_taxonomy"]["keep_kraken_output"] = options["keep_kraken_output"]
 
     def fill_do_blast_unclassified():
         if options["do_blast_unclassified"]:

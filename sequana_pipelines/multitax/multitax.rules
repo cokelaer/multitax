@@ -126,6 +126,7 @@ rule sequana_taxonomy:
     wrapper:
         f"{manager.wrappers}/wrappers/sequana_taxonomy"
 
+
 # ================================================== Blast
 #
 # for testing:
@@ -436,7 +437,8 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
     # cleanup
     shell("chmod -R g+w .")
     shell("rm -rf rulegraph")
-    shell("rm -rf */kraken/kraken.out")
+    if not config["sequana_taxonomy"]["keep_kraken_output"]:
+        shell("rm -rf */kraken/kraken.out")
 
 
 onerror:

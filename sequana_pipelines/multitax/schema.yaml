@@ -14,6 +14,9 @@ mapping:
     "input_pattern":
         type: str
         required: False
+    "exclude_pattern":
+        type: str
+        required: False
 
     "apptainers":
       type: any
@@ -33,6 +36,8 @@ mapping:
             "options":
                  type: str
             "store_unclassified":
+                type: bool
+            "keep_kraken_output":
                 type: bool
             "threads":
               type: int
