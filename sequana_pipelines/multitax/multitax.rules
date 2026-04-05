@@ -257,8 +257,8 @@ if len(config["sequana_taxonomy"]["databases"]) > 1:
 # ========================================================== multiqc
 
 multiqc_params_options = config['multiqc']['options']
-if manager.config.multiqc.config_file:
-    multiqc_params_options += f" -c {manager.config.multiqc.config_file}"
+if config['multiqc']['config_file']:
+    multiqc_params_options += f" -c {config['multiqc']['config_file']}"
 
 rule multiqc:
     input:
