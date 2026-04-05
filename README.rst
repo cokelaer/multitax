@@ -1,154 +1,190 @@
-
 .. image:: https://badge.fury.io/py/sequana-multitax.svg
      :target: https://pypi.python.org/pypi/sequana_multitax
-
-
-.. image:: https://github.com/sequana/multitax/actions/workflows/main.yml/badge.svg
-   :target: https://github.com/sequana/multitax/actions/workflows/main.yaml
-
-.. image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C3.10-blue.svg
-    :target: https://pypi.python.org/pypi/sequana
-    :alt: Python 3.8 | 3.9 | 3.10
 
 .. image:: http://joss.theoj.org/papers/10.21105/joss.00352/status.svg
     :target: http://joss.theoj.org/papers/10.21105/joss.00352
     :alt: JOSS (journal of open source software) DOI
 
-This is is the **multitax** pipeline from the `Sequana <https://sequana.readthedocs.org>`_ project
+.. image:: https://github.com/sequana/multitax/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/sequana/multitax/actions/workflows/main.yaml
 
-:Overview: Runs taxonomic analysis on a set of samples using sequana_taxonomy (kraken behing the scene)
-:Input: A set of Fastq files
+
+MULTITAX — Multi-database Taxonomic Classification pipeline
+============================================================
+
+:Overview: Runs taxonomic analysis on a set of samples using sequana_taxonomy
+           (Kraken2 under the hood), optionally followed by BLAST on
+           unclassified reads.
+:Input: A set of FastQ files (paired or single-end).
 :Output: HTML report for each sample and a summary HTML report for all samples.
 :Status: Production
-:Citation: Cokelaer et al, (2017), ‘Sequana’: a Set of Snakemake NGS pipelines, Journal of Open Source Software, 2(16), 352, JOSS DOI doi:10.21105/joss.00352
+:Citation: Cokelaer et al, (2017), 'Sequana': a Set of Snakemake NGS pipelines,
+           Journal of Open Source Software, 2(16), 352,
+           `doi:10.21105/joss.00352 <https://doi.org/10.21105/joss.00352>`_
+
+.. image:: https://raw.githubusercontent.com/sequana/multitax/main/sequana_pipelines/multitax/dag.png
+   :alt: Pipeline DAG
 
 
 Installation
-~~~~~~~~~~~~
-
-If you already have all requirements, you can install the packages using pip::
-
-    pip install sequana_multitax --upgrade
-
-
-Usage
-~~~~~
-
-In order to use this pipeline, you will need Kraken databases. Please see Kraken pages for help.
-
-We will also need a taxonomic databases. In principle this pipeline will download the file in your home, in
-/home/user/.config/sequana/taxonomy.dat one for all. Note, that with singularity, this file will be downloaded locally in your working directory for each analysis,except if it is found in your home, in which case a simple copy is performed.
+------------
 
 ::
 
-    sequana_multitax --help
-    sequana_multitax --input-directory DATAPATH  --databases toydb
+    pip install sequana-multitax
 
-For the database, you will need to provide your own databases. You can check out
-the documentation of kraken. The toydb here above is shipped with sequana and
-should work for demo. See sequana_taxonomy standalone for more help and
-information. You can also checkout the sequana documentation (kraken module).
+To upgrade an existing installation::
+
+    pip install sequana-multitax --upgrade
 
 
-The Kraken final report and blast analysis (if set) will need a taxonomic file
-stored in the sequana config directory (HOME/.config/sequana/taxonomy.dat). If
-not already done, type this command::
+Quick Start
+-----------
+
+**Step 1 — prepare the working directory**::
+
+    sequana_multitax \
+        --input-directory /path/to/reads \
+        --databases /path/to/krakendb
+
+This creates a ``multitax/`` working directory containing ``config.yaml`` and a
+``multitax.sh`` launch script.
+
+**Step 2 — review the configuration** (optional but recommended)::
+
+    cd multitax
+    cat config.yaml   # adjust parameters as needed
+
+**Step 3 — run the pipeline**::
+
+    sh multitax.sh
+
+
+Taxonomic database
+------------------
+
+You will need one or more Kraken2 databases. You can download a toy database
+for testing::
+
+    sequana_taxonomy --download toydb
+
+The pipeline also requires a taxonomy file stored in
+``~/.config/sequana/taxonomy.dat``. Download it once with::
 
     sequana_multitax --update-taxonomy
 
-You may need to call this command from time to time if unknown taxon appears in
-the HTML reports.
+Call this command again from time to time when unknown taxon IDs appear in the
+HTML reports.
+
+Multiple databases can be passed to run iterative classification::
+
+    sequana_multitax \
+        --input-directory /path/to/reads \
+        --databases /path/to/virusdb /path/to/bacteriadb
 
 
-This creates a directory with the pipeline and configuration file. You will then need
-to execute the pipeline::
+Apptainer / Singularity
+-----------------------
 
-    cd multitax
-    sh multitax.sh  # for a local run
+Every tool runs inside a pre-built container. Point ``--apptainer-prefix`` to a
+shared directory so images are downloaded once and reused across projects::
 
-This launch a snakemake pipeline. If you are familiar with snakemake, you can
-retrieve the pipeline itself and its configuration files and then execute the pipeline yourself with specific parameters::
+    sequana_multitax \
+        --input-directory /path/to/reads \
+        --databases /path/to/krakendb \
+        --apptainer-prefix ~/.sequana/apptainers
 
-    snakemake -s multitax.rules -c config.yaml --cores 4 --stats stats.txt
+Pass extra bind mounts with ``--apptainer-args`` if your data lives outside
+``$HOME``::
 
-Or use `sequanix <https://sequana.readthedocs.io/en/main/sequanix.html>`_ interface.
+    --apptainer-args "-B /data:/data"
+
+When running snakemake manually, include the singularity options::
+
+    snakemake -s multitax.rules -c config.yaml --cores 4 \
+        --use-singularity \
+        --singularity-prefix ~/.sequana/apptainers \
+        --singularity-args "-B /home:/home"
 
 
-Usage with singularity::
-~~~~~~~~~~~~~~~~~~~~~~~~~
+HPC / SLURM cluster
+-------------------
 
-With singularity, initiate the working directory as follows::
+On a cluster with SLURM, pass ``--profile slurm``::
 
-    sequana_multitax --use-singularity ...
+    sequana_multitax \
+        --input-directory /path/to/reads \
+        --databases /path/to/krakendb \
+        --profile slurm \
+        --slurm-queue fast \
+        --jobs 40 \
+        --apptainer-prefix /shared/containers
 
-Images are downloaded in the working directory but you can store then in a directory globally (e.g.)::
 
-    sequana_multitax --use-singularity --singularity-prefix ~/.sequana/apptainers
+BLAST on unclassified reads
+---------------------------
 
-and then::
+Reads that remain unclassified after Kraken can optionally be BLASTed against a
+local database::
 
-    cd multitax
-    sh multitax.sh
+    sequana_multitax \
+        --input-directory /path/to/reads \
+        --databases /path/to/krakendb \
+        --store-unclassified \
+        --do-blast-unclassified
 
-if you decide to use snakemake manually, do not forget to add singularity options::
+This requires a local BLAST+ installation and a downloaded ``nt`` database.
 
-    snakemake -s multitax.rules -c config.yaml --cores 4 --stats stats.txt --use-singularity --singularity-prefix ~/.sequana/apptainers --singularity-args "-B /home:/home"
+
+Pipeline overview
+-----------------
+
+1. **Kraken2** — classify reads against one or more databases sequentially.
+2. **Krona** — interactive pie charts per sample.
+3. **[Optional] BLAST** — align unclassified reads against a nucleotide DB.
+4. **MultiQC** — aggregated summary report across all samples.
+
+Each sample produces an HTML report with a static pie chart (species
+distribution; grey = unclassified) that links to an interactive Krona chart.
+
+.. image:: https://raw.githubusercontent.com/sequana/multitax/main/doc/images/piechart.png
+   :alt: Sample pie chart
+
+When multiple databases are provided they are applied sequentially. The order
+matters: reads classified by the first database are removed before the second
+database is run.
+
+
+Configuration file
+------------------
+
+After running ``sequana_multitax``, a ``config.yaml`` is created in the working
+directory. Key sections:
+
+- ``sequana_taxonomy`` — databases, confidence threshold, store_unclassified
+- ``blast`` — enable/disable BLAST on unclassified reads
+- ``multiqc`` — aggregated report settings
+
+Full reference:
+`config.yaml <https://raw.githubusercontent.com/sequana/multitax/main/sequana_pipelines/multitax/config.yaml>`_
 
 
 Requirements
-~~~~~~~~~~~~
-
-This pipelines requires the following executable(s):
+------------
 
 - kraken2
 - sequana_taxonomy
 - krona
 
 
-.. image:: https://raw.githubusercontent.com/sequana/multitax/main/sequana_pipelines/multitax/dag.png
-
-You can download databases from kraken website. We provide some databases on
-https://github.com/sequana/resources. You can download a toy database as follows::
-
-    sequana_taxonomy --download toydb
-
-The first time, a taxonomic database will be downloaded and stored locally in
-.config/sequana/taxonomy.dat file. You can update it from time to time using::
-
-    sequana_taxonomy --update-taxonomy
-
-
-Details
-~~~~~~~~~
-
-This pipeline runs **sequana_taxonomy** (based on kraken) in parallel on the input fastq files (paired or not).
-A brief sequana summary report is also produced. For each sample, a HTML page is
-reported with the following kind of image. This pie chart is a static image
-summarizing the species found in your sample. Unclassified reads are in grey.
-Colors correspond to a kingdom (green for viruses). If you click on the image,
-you will be redirect to a more precise pie chart base on Krona pie chart, which
-is more interactive.
-
-.. image:: https://raw.githubusercontent.com/sequana/multitax/main/doc/images/piechart.png
-
-The analysis is enterily based on Kraken tool. If several databases are
-provided, they are run sequentially. This requires a careful interpretation of
-the results. Indeed analysing data with viruses then bacteria may give different
-results as compare to analysing with bacteria then viruses.
-
-
-Rules and configuration details
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Here is the `latest documented configuration file <https://raw.githubusercontent.com/sequana/multitax/main/sequana_pipelines/multitax/config.yaml>`_
-to be used with the pipeline. Each rule used in the pipeline may have a section in the configuration file.
-
 Changelog
-~~~~~~~~~
+---------
 
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.14.1    * fix dict-style config assignment (use dot-notation on _Namespace)
+          * update README to follow sequana pipeline conventions
 0.14.0    * updated container and sequana to fix issue with sequential
             analysis (several DBs)
 0.13.0    * new containerisaton
@@ -161,7 +197,7 @@ Version   Description
 0.11.1    * add missing import in the main script
           * add wrapper version in config
 0.11.0    * use latest wrappers and graphivz apptainer
-          * create and use a sequana-wrappers for the sequana_taxonomy ruke
+          * create and use a sequana-wrappers for the sequana_taxonomy rule
           * fix type when downloading taxonomy.dat
 0.10.2    * add singularity containers
 0.10.1    * fix blast run when no taxid is found and HTML report

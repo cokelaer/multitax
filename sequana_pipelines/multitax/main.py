@@ -140,19 +140,19 @@ def main(**options):
                 if os.path.exists(db) is False:
                     click.echo(f"{db} not found. check its path.")
                     sys.exit(1)
-            cfg["sequana_taxonomy"]["databases"] = [os.path.abspath(x) for x in options["databases"]]
+            cfg.sequana_taxonomy.databases = [os.path.abspath(x) for x in options["databases"]]
 
     def fill_kraken_confidence():
-        cfg["sequana_taxonomy"]["confidence"] = options["kraken_confidence"]
+        cfg.sequana_taxonomy.confidence = options["kraken_confidence"]
 
     def fill_store_unclassified():
-        cfg["sequana_taxonomy"]["store_unclassified"] = options["store_unclassified"]
-        cfg["sequana_taxonomy"]["keep_kraken_output"] = options["keep_kraken_output"]
+        cfg.sequana_taxonomy.store_unclassified = options["store_unclassified"]
+        cfg.sequana_taxonomy.keep_kraken_output = options["keep_kraken_output"]
 
     def fill_do_blast_unclassified():
         if options["do_blast_unclassified"]:
-            cfg["sequana_taxonomy"]["store_unclassified"] = True
-            cfg["blast"]["do"] = True
+            cfg.sequana_taxonomy.store_unclassified = True
+            cfg.blast.do = True
 
     if options["from_project"]:
         if "--databases" in sys.argv:
