@@ -88,6 +88,6 @@ jobs:
     - name: testing
       run: |
         sequana_taxonomy  --download toydb
-        sequana_multitax --input-directory test/data/  --use-apptainer --databases ~/.config/sequana/kraken2_dbs/toydb && cd multitax && sh multitax.sh
+        sequana_multitax --input-directory test/data/  --use-apptainer --databases ~/.config/sequana/kraken2_dbs/toydb && cd multitax && bash multitax.sh
 
 
