@@ -5,9 +5,7 @@
 # If input_directory provided, use it otherwise if input_pattern provided,
 # use it, otherwise use input_samples.
 # ============================================================================
-sequana_wrappers: "v25.11.16"
-
-input_directory: 
+input_directory:
 input_readtag: _R[12]_
 input_pattern: "*fastq.gz"
 
