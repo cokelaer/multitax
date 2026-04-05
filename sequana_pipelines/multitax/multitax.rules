@@ -66,10 +66,10 @@ def get_sequana_taxonomy_unclassified():
 
 # ================================================== Taxonomy
 #
-def get_sequana_taxonomy_inputs():
+def get_sequana_taxonomy_taxonomy_dep():
 
-    # in theory, users should call sequana_taxonomy manually, 
-    # but for the singularity case, the taxonomy.dat file will 
+    # in theory, users should call sequana_taxonomy manually,
+    # but for the singularity case, the taxonomy.dat file will
     # be download by the image in .config/sequana. This is fine
     # and works. However, on a cluster, this means access to network
     # so it should be run locally. Yet, the rule sequana_taxonomy
@@ -95,14 +95,28 @@ def get_sequana_taxonomy_inputs():
                     sequana_taxonomy --update-taxonomy
                     """
 
-        return manager.getrawdata(), ".config/sequana/taxonomy.dat"
+        return ".config/sequana/taxonomy.dat"
     else:
-        return manager.getrawdata(),
+        return []
+
+
+# Build sequana_taxonomy options from individual config fields
+_taxonomy_options = config["sequana_taxonomy"].get("options", "")
+_confidence = config["sequana_taxonomy"].get("confidence", 0)
+if _confidence:
+    _taxonomy_options += f" --confidence {_confidence}"
+_taxonomy_options += f" --level {config['sequana_taxonomy'].get('level', 'INFO')}"
+if config["sequana_taxonomy"].get("store_unclassified", False):
+    if manager.paired:
+        _taxonomy_options += " --unclassified-out unclassified#.fastq"
+    else:
+        _taxonomy_options += " --unclassified-out unclassified.fastq"
 
 
 rule sequana_taxonomy:
     input:
-        get_sequana_taxonomy_inputs()
+        fastq=manager.getrawdata(),
+        taxonomy=get_sequana_taxonomy_taxonomy_dep()
     output:
         html         = '{sample}/summary.html',
         csv          = '{sample}/kraken/kraken.csv',
@@ -112,19 +126,15 @@ rule sequana_taxonomy:
     threads:
         config['sequana_taxonomy']['threads']
     params:
-        # required
-        paired=manager.paired,
         databases=config["sequana_taxonomy"]["databases"],
-        store_unclassified=config["sequana_taxonomy"]["store_unclassified"],
-        # optional
-        confidence=config["sequana_taxonomy"].get("confidence", 0),
-        level=config["sequana_taxonomy"].get("level", "INFO"),
-        options=config["sequana_taxonomy"].get("options", "")
+        options=_taxonomy_options
+    log:
+        "{sample}/kraken/sequana_taxonomy.log"
     container:
         # this container must have sequana + kraken2 (for sequana_taxonomy)
         config["apptainers"]["sequana"]
-    wrapper:
-        f"{manager.wrappers}/wrappers/sequana_taxonomy"
+    shell:
+        manager.get_shell("sequana_taxonomy/run", "v1")
 
 
 # ================================================== Blast
@@ -266,8 +276,8 @@ rule multiqc:
     container:
         # must contain multiqc + sequana multiqc plugins
         config["apptainers"]["multiqc"]
-    wrapper:
-       f"{manager.wrappers}/wrappers/multiqc"
+    shell:
+        manager.get_shell("multiqc/run", "v1")
 
 
 # ========================================================== rulegraph
@@ -278,8 +288,8 @@ rule rulegraph:
     params:
         mapper = {"multiqc": "../multiqc/multiqc_report.html"},
         configname = "config.yaml"
-    wrapper:
-        f"{manager.wrappers}/wrappers/rulegraph"
+    run:
+        manager.get_run("rulegraph/run", "v1")(input, output, params)
 
 
 
