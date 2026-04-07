@@ -67,13 +67,6 @@ mapping:
 
 
 
-    "dendogram":
-        type: map
-        mapping:
-            "sample_file":
-                type: str
-                required: False
-
     "summary_plot":
         type: map
         mapping:

@@ -8,6 +8,10 @@
 .. image:: https://github.com/sequana/multitax/actions/workflows/main.yml/badge.svg
    :target: https://github.com/sequana/multitax/actions/workflows/main.yaml
 
+.. image:: https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg
+    :target: https://pypi.python.org/pypi/sequana_multitax
+    :alt: Python 3.11 | 3.12
+
 
 MULTITAX — Multi-database Taxonomic Classification pipeline
 ============================================================
