@@ -1,11 +1,10 @@
 name: sequana_multitax
-
 channels:
 - conda-forge
 - bioconda
 - defaults
 - r
-
 dependencies:
 - kraken2
 - krona
+- pulp>=2.8

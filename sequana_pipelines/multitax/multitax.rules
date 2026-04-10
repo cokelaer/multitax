@@ -77,7 +77,7 @@ def get_sequana_taxonomy_taxonomy_dep():
     # network access...if we use singularity, we can therefore
     # download the file manually and copy it in .config/sequana/taxonomy
     # or let this rule work locally
-    if workflow.use_singularity:
+    if getattr(workflow, "use_singularity", False) or getattr(workflow, "use_apptainer", False):
 
         home = Path(".").home()
         if (home / Path(".config/sequana/taxonomy.dat")).exists():
@@ -175,7 +175,7 @@ if config['blast']['do']:
 
     rule blast_analysis:
         input: 
-            rule.blast_fasta.output[0]
+            rules.blast_fasta.output[0]
             # "{sample}/blast/blast.tsv"
         output:
             "{sample}/blast/blast_summary.csv",

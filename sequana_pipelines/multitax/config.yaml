@@ -27,6 +27,7 @@ sequana_taxonomy:
     level: INFO
     confidence: 0
     store_unclassified: false
+    keep_kraken_output: false
     options: ""
     threads: 4
 

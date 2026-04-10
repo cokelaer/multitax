@@ -6,7 +6,11 @@
     :alt: JOSS (journal of open source software) DOI
 
 .. image:: https://github.com/sequana/multitax/actions/workflows/main.yml/badge.svg
-   :target: https://github.com/sequana/multitax/actions/workflows/main.yaml
+   :target: https://github.com/sequana/multitax/actions/workflows/main.yml
+
+.. image:: https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg
+    :target: https://pypi.python.org/pypi/sequana_multitax
+    :alt: Python 3.11 | 3.12
 
 
 MULTITAX — Multi-database Taxonomic Classification pipeline
@@ -99,12 +103,12 @@ Pass extra bind mounts with ``--apptainer-args`` if your data lives outside
 
     --apptainer-args "-B /data:/data"
 
-When running snakemake manually, include the singularity options::
+When running snakemake manually, include the apptainer options::
 
-    snakemake -s multitax.rules -c config.yaml --cores 4 \
-        --use-singularity \
-        --singularity-prefix ~/.sequana/apptainers \
-        --singularity-args "-B /home:/home"
+    snakemake -s multitax.rules --configfile config.yaml --cores 4 \
+        --use-apptainer \
+        --apptainer-prefix ~/.sequana/apptainers \
+        --apptainer-args "-B /home:/home"
 
 
 HPC / SLURM cluster
@@ -183,6 +187,13 @@ Changelog
 ========= ====================================================================
 Version   Description
 ========= ====================================================================
+0.15.0    * Fix Snakemake 8 compatibility (use_singularity → use_apptainer)
+          * Fix typo in rules (rule → rules for blast_fasta reference)
+          * Add missing keep_kraken_output key in default config
+          * Remove orphan dendogram section from schema
+          * Update dependencies (snakemake, pulp, pytest)
+          * Fix apptainer CI workflow
+          * Simplify __init__.py version detection
 0.14.1    * fix dict-style config assignment (use dot-notation on _Namespace)
           * update README to follow sequana pipeline conventions
 0.14.0    * updated container and sequana to fix issue with sequential
