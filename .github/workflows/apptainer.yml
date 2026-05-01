@@ -39,9 +39,18 @@ jobs:
     - name: Install Apptainer
       run: |
         APPTAINER_VERSION=$(curl -s https://api.github.com/repos/apptainer/apptainer/releases/latest \
-          | grep '"tag_name"' | cut -d'"' -f4 | sed 's/v//')
-        wget -q "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb"
-        sudo apt-get install -y "./apptainer_${APPTAINER_VERSION}_amd64.deb"
+          | jq -r '.tag_name' | sed 's/v//')
+        if [ -z "$APPTAINER_VERSION" ]; then
+          echo "ERROR: Could not determine Apptainer version" >&2
+          exit 1
+        fi
+        DEB="apptainer_${APPTAINER_VERSION}_amd64.deb"
+        wget -q "https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/${DEB}"
+        if [ ! -f "$DEB" ]; then
+          echo "ERROR: Failed to download ${DEB}" >&2
+          exit 1
+        fi
+        sudo apt-get install -y "./${DEB}"
         apptainer --version
         sudo apt-get install -y graphviz
 
