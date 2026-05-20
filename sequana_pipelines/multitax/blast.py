@@ -361,9 +361,18 @@ def remove_duplicates(filename):
 
 
 def krona(filename, output):
-    """krona visulation"""
+    """krona visualization"""
+    import os
 
     df = pd.read_csv(filename, sep=",", header="infer")  # output of remove_duplicates
+
+    # Count total reads from unclassified_subsample.fasta
+    fasta_dir = os.path.dirname(filename)
+    fasta_path = os.path.join(os.path.dirname(fasta_dir), "kraken", "unclassified_subsample.fasta")
+    total_reads = 0
+    if os.path.exists(fasta_path):
+        with open(fasta_path) as f:
+            total_reads = sum(1 for line in f if line.startswith(">"))
 
     # We keep only the first ranks
     cols_to_drop = ["qseqid", "bitscore", "taxid_LCA", "SpeciesName", "Strain"]
@@ -379,9 +388,24 @@ def krona(filename, output):
     groupby_cols = [c for c in groupby_cols if c in df.columns]
 
     df = df.groupby(groupby_cols).size().reset_index(name="Count")
+
+    # Add unclassified reads if we know the total
+    if total_reads > 0:
+        classified_reads = df["Count"].sum()
+        unclassified_count = total_reads - classified_reads
+        if unclassified_count > 0:
+            unclassified_row = {col: "Unclassified" for col in groupby_cols}
+            unclassified_row["Count"] = unclassified_count
+            df = pd.concat([df, pd.DataFrame([unclassified_row])], ignore_index=True)
+
+    # Add percentage column
+    total = df["Count"].sum()
+    df["Percentage"] = (df["Count"] / total * 100).round(2)
+
     # Reindex with the columns that actually exist
     reindex_cols = [
         "Count",
+        "Percentage",
         top_rank,
         "Phylum",
         "Class",
