@@ -10,8 +10,9 @@
 #  Documentation: http://sequana.readthedocs.io
 #  Contributors:  https://github.com/sequana/sequana/graphs/contributors
 ##############################################################################
-import pandas as pd
 from collections import defaultdict
+
+import pandas as pd
 from sequana.taxonomy import Taxonomy
 
 
@@ -44,10 +45,10 @@ def parse_blast(filename):
     df["taxids"] = df["taxids"].astype(str)
 
     # On vérifie si les 1000 reads initiaux ont été blastés
-    #len_diff = (Ntotal - len(df["qseqid"].unique())) / 10
+    # len_diff = (Ntotal - len(df["qseqid"].unique())) / 10
 
     # Percentage of unclassified reads not in blast
-    #print(f"percentage of input reads not classified by Blast: {len_diff}% ")
+    # print(f"percentage of input reads not classified by Blast: {len_diff}% ")
 
     # keep only the first taxids if there are several in the same row knowing
     # they belong to the same lineage
@@ -62,14 +63,11 @@ def parse_blast(filename):
     for qseqid in qseqid_set:
         bitscore_max = df.loc[(df["qseqid"] == str(qseqid))]["bitscore"].max()
         df.drop(
-            df[
-                ((df["qseqid"] == str(qseqid)) & (df["bitscore"] < int(bitscore_max)))
-            ].index,
+            df[((df["qseqid"] == str(qseqid)) & (df["bitscore"] < int(bitscore_max)))].index,
             inplace=True,
         )
 
     return df
-
 
 
 def read_taxonomy(filename=None):
@@ -80,22 +78,54 @@ def read_taxonomy(filename=None):
         tax = Taxonomy()
         filename = tax.database
 
-    with open(filename, "r") as f:
-        current_key = None
+    # Handle both old text format (taxonomy.dat) and new CSV format (taxonomy.csv.gz)
+    if filename.endswith(".csv.gz") or filename.endswith(".csv"):
+        import gzip
+
+        open_func = gzip.open if filename.endswith(".gz") else open
+        mode = "rt" if filename.endswith(".gz") else "r"
+
         TAXID = defaultdict(list)
+        with open_func(filename, mode) as f:
+            header = f.readline().strip().split(",")
+            id_idx = header.index("id")
+            parent_idx = header.index("parent")
+            rank_idx = header.index("rank")
+            name_idx = header.index("scientific_name")
 
-        for line in f.readlines():
+            for line in f:
+                line = line.rstrip("\n")
+                # Split only on first 3 commas, rest is the scientific name
+                parts = line.split(",", 3)
+                if len(parts) >= 4:
+                    taxid = str(parts[id_idx])
+                    parent = str(parts[parent_idx])
+                    rank = str(parts[rank_idx])
+                    name = str(parts[name_idx])
+                    TAXID[taxid] = [parent, rank, name]
+        return TAXID
+    else:
+        import gzip
 
-            if " : " in line:
-                deb = line.split(" : ")
-                (key, value) = (deb[0].strip(), deb[1].strip())
+        open_func = gzip.open if filename.endswith(".gz") else open
+        mode = "rt" if filename.endswith(".gz") else "r"
 
-                if key == "ID":
-                    current_key = value
-                else:
-                    TAXID[current_key].append(value)
+        with open_func(filename, mode) as f:
+            current_key = None
+            TAXID = defaultdict(list)
 
-    return TAXID
+            for line in f.readlines():
+
+                if " : " in line:
+                    deb = line.split(" : ")
+                    (key, value) = (deb[0].strip(), deb[1].strip())
+
+                    if key == "ID":
+                        current_key = value
+                    else:
+                        TAXID[current_key].append(value)
+
+        return TAXID
 
 
 # OPTIONNEL : RECUPERATION DES TAXIDS DEPUIS LES ACCESSION NUMBERS
@@ -139,6 +169,7 @@ def taxidstolineage(taxid_set):
         "order",
         "class",
         "phylum",
+        "domain",  # Modern taxonomy uses "domain" instead of "superkingdom" for Eukaryota
         "superkingdom",
     )  # Peut se modifier en fonction de ce que l'on veut
 
@@ -152,16 +183,10 @@ def taxidstolineage(taxid_set):
             # ranks attribue à chaque head_rank son sub_group de ranks
             taxid_sup = taxid
             for head_rank in head_ranks:
-                if (
-                    TAXID[str(taxid_sup)][1] == head_rank
-                ):  # On est déjà au niveau du head_rank qui nous intéresse
-                    value_rank = TAXID[str(taxid_sup)][
-                        2
-                    ]  # On prend le nom scientifique au niveau du head rank
+                if TAXID[str(taxid_sup)][1] == head_rank:  # On est déjà au niveau du head_rank qui nous intéresse
+                    value_rank = TAXID[str(taxid_sup)][2]  # On prend le nom scientifique au niveau du head rank
                     taxid_rank = taxid_sup
-                    taxid_sup = TAXID[str(taxid_sup)][
-                        0
-                    ]  # On remonte de head rank en head rank
+                    taxid_sup = TAXID[str(taxid_sup)][0]  # On remonte de head rank en head rank
 
                 else:  # Il faut prendre en compte que certains rangs ne sont pas classés dans la hiérarchie des rangs mais que l'on peut tout de mâme éventuellement remonter et tomber sur le head_rank d'intérêt. Il s'agit des rangs suivants : 'no_rank', 'clade', 'genotype', 'pathogroup', 'serotype', 'serogroup'.
                     taxid_bis = TAXID[str(taxid_sup)][0]
@@ -207,9 +232,14 @@ def get_LCA(filename):
     df["Order"] = df.apply(lambda row: TAXID2LIN[row.taxids][8], axis=1)
     df["Class"] = df.apply(lambda row: TAXID2LIN[row.taxids][10], axis=1)
     df["Phylum"] = df.apply(lambda row: TAXID2LIN[row.taxids][12], axis=1)
-    df["Superkingdom"] = df.apply(lambda row: TAXID2LIN[row.taxids][14], axis=1)
+    df["Domain"] = df.apply(
+        lambda row: TAXID2LIN[row.taxids][14] if len(TAXID2LIN[row.taxids]) > 14 else "None", axis=1
+    )
+    df["Superkingdom"] = df.apply(
+        lambda row: TAXID2LIN[row.taxids][16] if len(TAXID2LIN[row.taxids]) > 16 else TAXID2LIN[row.taxids][14], axis=1
+    )
 
-    # deal with uncultured bacteria 
+    # deal with uncultured bacteria
     df["SpeciesName"] = df.apply(lambda row: TAXID2LIN[row.taxids][3], axis=1)
 
     Rank_Names = [
@@ -228,15 +258,14 @@ def get_LCA(filename):
     # We get back the LCA for each subset of duplicated entryies (gp de qseqid)
     # and store them in SEQID2LCA
     for qseqid in qseqid_set:
+        taxid_LCA = "None"
 
         for rank in Rank_Names:
 
             taxid_unique = df.loc[(df["qseqid"] == str(qseqid))][rank].unique()
 
             # deal with uncultured bacteria
-            name_species_unique = df.loc[(df["qseqid"] == str(qseqid))][
-                "SpeciesName"
-            ].unique()
+            name_species_unique = df.loc[(df["qseqid"] == str(qseqid))]["SpeciesName"].unique()
 
             if len(taxid_unique) == 1:
 
@@ -253,9 +282,7 @@ def get_LCA(filename):
 
                 # special case of uncultered bacteria --> we keep the bacteria
                 # at the level of superkingdom
-                elif rank == "Superkingdom" and "uncultured" in str(
-                    name_species_unique
-                ):
+                elif rank == "Superkingdom" and "uncultured" in str(name_species_unique):
                     taxid_LCA = "2"
                     break
 
@@ -317,7 +344,15 @@ def remove_duplicates(filename):
     df["Order"] = df.apply(lambda row: TAXID2LIN[row.taxid_LCA][9], axis=1)
     df["Class"] = df.apply(lambda row: TAXID2LIN[row.taxid_LCA][11], axis=1)
     df["Phylum"] = df.apply(lambda row: TAXID2LIN[row.taxid_LCA][13], axis=1)
-    df["Superkingdom"] = df.apply(lambda row: TAXID2LIN[row.taxid_LCA][15], axis=1)
+    df["Domain"] = df.apply(
+        lambda row: TAXID2LIN[row.taxid_LCA][15] if len(TAXID2LIN[row.taxid_LCA]) > 15 else "None", axis=1
+    )
+    df["Superkingdom"] = df.apply(
+        lambda row: TAXID2LIN[row.taxid_LCA][17]
+        if len(TAXID2LIN[row.taxid_LCA]) > 17
+        else TAXID2LIN[row.taxid_LCA][15],
+        axis=1,
+    )
 
     # On exporte les résultats au format .csv
     df.to_csv("{}_Results.csv".format(filename), index=False)
@@ -331,28 +366,32 @@ def krona(filename, output):
     df = pd.read_csv(filename, sep=",", header="infer")  # output of remove_duplicates
 
     # We keep only the first ranks
-    df = df.drop(columns=["qseqid", "bitscore", "taxid_LCA", "SpeciesName", "Strain"])
+    cols_to_drop = ["qseqid", "bitscore", "taxid_LCA", "SpeciesName", "Strain"]
+    available_cols = [c for c in cols_to_drop if c in df.columns]
+    df = df.drop(columns=available_cols)
+
+    # Use Domain if available (modern taxonomy), otherwise use Superkingdom
+    top_rank = "Domain" if "Domain" in df.columns else "Superkingdom"
 
     # Se the correct format for krona (ktImportText)
-    df = (
-        df.groupby(
-            ["Superkingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"]
-        )
-        .size()
-        .reset_index(name="Count")
-    )
-    df = df.reindex(
-        columns=[
-            "Count",
-            "Superkingdom",
-            "Phylum",
-            "Class",
-            "Order",
-            "Family",
-            "Genus",
-            "Species",
-        ]
-    )
+    groupby_cols = [top_rank, "Phylum", "Class", "Order", "Family", "Genus", "Species"]
+    # Filter to only columns that exist
+    groupby_cols = [c for c in groupby_cols if c in df.columns]
+
+    df = df.groupby(groupby_cols).size().reset_index(name="Count")
+    # Reindex with the columns that actually exist
+    reindex_cols = [
+        "Count",
+        top_rank,
+        "Phylum",
+        "Class",
+        "Order",
+        "Family",
+        "Genus",
+        "Species",
+    ]
+    reindex_cols = [c for c in reindex_cols if c in df.columns]
+    df = df[reindex_cols]
 
     df.to_csv("{}".format(filename), index=False)
 
