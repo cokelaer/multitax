@@ -60,7 +60,7 @@ else:
 def get_sequana_taxonomy_unclassified():
 
     if manager.paired:
-        return "{sample}/kraken/unclassified1.fastq"
+        return "{sample}/kraken/unclassified.fastq"
     else:
         return "{sample}/kraken/unclassified.fastq"
 
@@ -106,11 +106,6 @@ _confidence = config["sequana_taxonomy"].get("confidence", 0)
 if _confidence:
     _taxonomy_options += f" --confidence {_confidence}"
 _taxonomy_options += f" --level {config['sequana_taxonomy'].get('level', 'INFO')}"
-if config["sequana_taxonomy"].get("store_unclassified", False):
-    if manager.paired:
-        _taxonomy_options += " --unclassified-out unclassified#.fastq"
-    else:
-        _taxonomy_options += " --unclassified-out unclassified.fastq"
 
 
 rule sequana_taxonomy:
@@ -122,11 +117,12 @@ rule sequana_taxonomy:
         csv          = '{sample}/kraken/kraken.csv',
         summary      = '{sample}/kraken/kraken.out.summary',
         summary_json = '{sample}/kraken/summary.json',
-        unclassified = get_sequana_taxonomy_unclassified()
+        **({"unclassified": get_sequana_taxonomy_unclassified()} if config['sequana_taxonomy'].get('store_unclassified', False) else {})
     threads:
         config['sequana_taxonomy']['threads']
     params:
         databases=config["sequana_taxonomy"]["databases"],
+        store_unclassified=config["sequana_taxonomy"].get("store_unclassified", False),
         options=_taxonomy_options
     log:
         "{sample}/kraken/sequana_taxonomy.log"
@@ -308,7 +304,7 @@ rule dot2svg:
 
 
 # Those rules takes a couple of seconds so no need for a cluster
-localrules: multiqc, rulegraph, summary_plot, download_taxonomy
+localrules: multiqc, rulegraph, summary_plot
 
 
 
