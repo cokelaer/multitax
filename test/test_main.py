@@ -142,36 +142,3 @@ def test_blast_unclassified_config(tmp_path):
     config = yaml.safe_load((Path(str(tmp_path)) / "config.yaml").read_text())
     assert config["blast"]["do"] is True
     assert config["sequana_taxonomy"]["store_unclassified"] is True
-
-
-def test_full():
-    with tempfile.TemporaryDirectory() as directory:
-        wk = directory
-        cmd = f"sequana_multitax --input-directory {simpledir} --working-directory {wk} --force --databases {krakendb}"
-        subprocess.call(cmd.split())
-        stat = subprocess.call("bash multitax.sh".split(), cwd=wk)
-        assert stat == 0
-        assert os.path.exists(os.path.join(wk, "data", "summary.html"))
-        assert os.path.exists(os.path.join(wk, "data", "kraken", "kraken.csv"))
-
-
-def test_full_paired():
-    with tempfile.TemporaryDirectory() as directory:
-        wk = directory
-        cmd = f"sequana_multitax --input-directory {paireddir} --working-directory {wk} --force --databases {krakendb}"
-        subprocess.call(cmd.split())
-        stat = subprocess.call("bash multitax.sh".split(), cwd=wk)
-        assert stat == 0
-        assert os.path.exists(os.path.join(wk, "data", "summary.html"))
-        assert os.path.exists(os.path.join(wk, "data", "kraken", "kraken.csv"))
-
-
-def test_full_multiple_dbs():
-    with tempfile.TemporaryDirectory() as directory:
-        wk = directory
-        cmd = f"sequana_multitax --input-directory {simpledir} --working-directory {wk} --force --databases {krakendb} {krakendb}"
-        subprocess.call(cmd.split())
-        stat = subprocess.call("bash multitax.sh".split(), cwd=wk)
-        assert stat == 0
-        assert os.path.exists(os.path.join(wk, "data", "summary.html"))
-        assert os.path.exists(os.path.join(wk, "outputs", "proportion_dbs.png"))

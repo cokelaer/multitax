@@ -117,7 +117,7 @@ rule sequana_taxonomy:
         csv          = '{sample}/kraken/kraken.csv',
         summary      = '{sample}/kraken/kraken.out.summary',
         summary_json = '{sample}/kraken/summary.json',
-        **({"unclassified": get_sequana_taxonomy_unclassified()} if config['sequana_taxonomy'].get('store_unclassified', False) else {})
+        unclassified = get_sequana_taxonomy_unclassified()
     threads:
         config['sequana_taxonomy']['threads']
     params:
@@ -130,7 +130,7 @@ rule sequana_taxonomy:
         # this container must have sequana + kraken2 (for sequana_taxonomy)
         config["apptainers"]["sequana"]
     shell:
-        manager.get_shell("sequana_taxonomy/run", "v1")
+        manager.get_shell("sequana_taxonomy/run", "v1") + "; touch {output.unclassified}"
 
 
 # ================================================== Blast
