@@ -79,4 +79,4 @@ jobs:
     - name: Run Apptainer tests
       run: |
         sequana_taxonomy --download toydb
-        sequana_multitax --input-directory test/data/ --apptainer-prefix ~/.apptainer/cache --databases ~/.config/sequana/kraken2_dbs/toydb && cd multitax && bash multitax.sh
+        sequana_multitax --input-directory test/data/ --exclude-pattern empty --apptainer-prefix ~/.apptainer/cache --databases ~/.config/sequana/kraken2_dbs/toydb && cd multitax && bash multitax.sh

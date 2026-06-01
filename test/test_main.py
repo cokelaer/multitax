@@ -1,9 +1,11 @@
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
+import pytest
 import yaml
 from click.testing import CliRunner
 
@@ -142,3 +144,34 @@ def test_blast_unclassified_config(tmp_path):
     config = yaml.safe_load((Path(str(tmp_path)) / "config.yaml").read_text())
     assert config["blast"]["do"] is True
     assert config["sequana_taxonomy"]["store_unclassified"] is True
+
+
+@pytest.mark.skipif(
+    shutil.which("kraken2") is None or shutil.which("sequana_taxonomy") is None,
+    reason="kraken2 / sequana_taxonomy not available; functional run skipped",
+)
+def test_functional(tmp_path):
+    # End-to-end run on valid (non-empty) data. The deliberately-empty
+    # `empty_R1_.fastq.gz` fixture is excluded as it has no reads to classify.
+    runner = CliRunner()
+    results = runner.invoke(
+        main,
+        [
+            "--input-directory",
+            sharedir,
+            "--exclude-pattern",
+            "empty",
+            "--working-directory",
+            str(tmp_path),
+            "--force",
+            "--databases",
+            krakendb,
+        ],
+    )
+    assert results.exit_code == 0
+
+    completed = subprocess.run(["bash", "multitax.sh"], cwd=str(tmp_path))
+    assert completed.returncode == 0
+
+    assert (tmp_path / "data" / "summary.html").exists()
+    assert (tmp_path / "data" / "kraken" / "kraken.csv").exists()
