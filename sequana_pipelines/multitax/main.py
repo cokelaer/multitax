@@ -56,15 +56,17 @@ def update_taxonomy(ctx, param, value):
 
 # callback for --databases multiple arguments
 def check_databases(ctx, param, value):
-    if value:
-        # click transform the input databases  (tuple) into a string
-        # we need to convert it back to a tuple before checking the databases
-        values = ast.literal_eval(value)
-        for db in values:
-            if not os.path.exists(db):
-                click.echo(f"{db} does not exists. Check its path name")
-                sys.exit(1)
-    return ast.literal_eval(value)
+    if not value:
+        # e.g. with --from-project, --databases may not be provided
+        return value
+    # click transform the input databases  (tuple) into a string
+    # we need to convert it back to a tuple before checking the databases
+    values = ast.literal_eval(value)
+    for db in values:
+        if not os.path.exists(db):
+            click.echo(f"{db} does not exists. Check its path name")
+            sys.exit(1)
+    return values
 
 
 @click.command(context_settings=help)
@@ -93,7 +95,7 @@ def check_databases(ctx, param, value):
     type=click.STRING,
     cls=OptionEatAll,
     callback=check_databases,
-    required="--update-taxonomy" not in sys.argv,
+    required="--update-taxonomy" not in sys.argv and "--from-project" not in sys.argv,
     help="""Path to a valid Kraken database(s). See sequana_taxonomy
             standaline to download some. You may use several, in which case, an
             iterative taxonomy is performed as explained in online sequana
@@ -117,10 +119,6 @@ def check_databases(ctx, param, value):
     help="""By default kraken output are deleted (to save space). use this flag to keep these files.""",
 )
 def main(**options):
-
-    if options["from_project"]:
-        click.echo("--from-project Not yet implemented")
-        sys.exit(1)
 
     # the real stuff is here
     manager = SequanaManager(options, NAME)
@@ -161,7 +159,7 @@ def main(**options):
             fill_kraken_confidence()
         if "--store-unclassified" in sys.argv:
             fill_store_unclassified()
-        if "--do_blast_unclassified" in sys.argv:
+        if "--do-blast-unclassified" in sys.argv:
             fill_do_blast_unclassified()
     else:
         fill_databases()

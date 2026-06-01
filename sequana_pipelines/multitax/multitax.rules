@@ -36,10 +36,11 @@ if len(config['sequana_taxonomy']["databases"]) > 1:
 
 
 
-if config['blast']['do'] and not config['sequana_taxonomy']['store_unclassified']:
-    from sequana import logger
-    logger.error("You set blast section so you must set sequana_taxonomy/store_unclassified to true in the configuration file")
-    sys.exit(1)
+# blast needs unclassified reads, so auto-enable store_unclassified when blast.do is set
+_store_unclassified = bool(
+    config["sequana_taxonomy"].get("store_unclassified", False)
+    or config["blast"].get("do", False)
+)
 
 
 
@@ -50,7 +51,8 @@ if config['blast']['do']:
             expand("{sample}/kraken/unclassified_subsample.fasta", sample=sorted(manager.samples)),
             expand("{sample}/blast/blast.tsv", sample=sorted(manager.samples)),
             expand("{sample}/blast/krona.txt", sample=sorted(manager.samples)),
-            expand("{sample}/blast/text.krona.html", sample=sorted(manager.samples))
+            expand("{sample}/blast/text.krona.html", sample=sorted(manager.samples)),
+            expand("{sample}/.blast_summary_updated", sample=sorted(manager.samples))
 else:
     rule all:
         input:
@@ -66,36 +68,48 @@ def get_sequana_taxonomy_unclassified():
 
 # ================================================== Taxonomy
 #
+def _using_apptainer():
+    # snakemake <8 exposed workflow.use_singularity / workflow.use_apptainer.
+    # snakemake >=8 dropped those in favour of
+    # workflow.deployment_settings.deployment_method (a set of DeploymentMethod enums).
+    if getattr(workflow, "use_singularity", False) or getattr(workflow, "use_apptainer", False):
+        return True
+    ds = getattr(workflow, "deployment_settings", None)
+    methods = getattr(ds, "deployment_method", ()) if ds is not None else ()
+    return any("APPTAINER" in str(m).upper() or "SINGULARITY" in str(m).upper() for m in methods)
+
+
 def get_sequana_taxonomy_taxonomy_dep():
 
-    # in theory, users should call sequana_taxonomy manually,
-    # but for the singularity case, the taxonomy.dat file will
-    # be download by the image in .config/sequana. This is fine
-    # and works. However, on a cluster, this means access to network
-    # so it should be run locally. Yet, the rule sequana_taxonomy
-    # required resources so it should be a cluster node that has no
-    # network access...if we use singularity, we can therefore
-    # download the file manually and copy it in .config/sequana/taxonomy
-    # or let this rule work locally
-    if getattr(workflow, "use_singularity", False) or getattr(workflow, "use_apptainer", False):
+    # The sequana_taxonomy rule needs the NCBI taxonomy database
+    # (~/.config/sequana/taxonomy.csv.gz). When running inside a container,
+    # snakemake forces --home to the working directory, so sequana looks for the
+    # database under <workdir>/.config/sequana and, if missing, tries to download
+    # it. On a cluster the resource-heavy sequana_taxonomy rule runs on a compute
+    # node that usually has no network access, so the download fails.
+    #
+    # To avoid that, when apptainer/singularity is used we stage the database into
+    # the working directory up-front: either by copying the user's existing cache
+    # (done at parse time on the host, which has the real home and network) or via
+    # a local download_taxonomy rule (kept local so it runs on the submit node).
+    if _using_apptainer():
 
+        os.makedirs(".config/sequana", exist_ok=True)
         home = Path(".").home()
-        if (home / Path(".config/sequana/taxonomy.dat")).exists():
-            os.makedirs(".config/", exist_ok=True)
-            os.makedirs(".config/sequana", exist_ok=True)
-            shell("cp ~/.config/sequana/taxonomy.dat .config/sequana/")
+        if (home / Path(".config/sequana/taxonomy.csv.gz")).exists():
+            shell("cp ~/.config/sequana/taxonomy.csv.gz .config/sequana/")
         else:
             rule download_taxonomy:
                 input:
-                output: ".config/sequana/taxonomy.dat"
+                output: ".config/sequana/taxonomy.csv.gz"
                 container:
-                    config["apptainers"]["sequana_tools"]
+                    config["apptainers"]["sequana"]
                 shell:
                     """
                     sequana_taxonomy --update-taxonomy
                     """
 
-        return ".config/sequana/taxonomy.dat"
+        return ".config/sequana/taxonomy.csv.gz"
     else:
         return []
 
@@ -122,7 +136,7 @@ rule sequana_taxonomy:
         config['sequana_taxonomy']['threads']
     params:
         databases=config["sequana_taxonomy"]["databases"],
-        store_unclassified=config["sequana_taxonomy"].get("store_unclassified", False),
+        store_unclassified=_store_unclassified,
         options=_taxonomy_options
     log:
         "{sample}/kraken/sequana_taxonomy.log"
@@ -130,7 +144,7 @@ rule sequana_taxonomy:
         # this container must have sequana + kraken2 (for sequana_taxonomy)
         config["apptainers"]["sequana"]
     shell:
-        manager.get_shell("sequana_taxonomy/run", "v1") + "; touch {output.unclassified}"
+        manager.get_shell("sequana_taxonomy/run", "v1")
 
 
 # ================================================== Blast
@@ -145,7 +159,7 @@ if config['blast']['do']:
         params:
             nreads=config['blast']['nreads']
         container:
-            config["apptainers"]["sequana_tools"]
+            config["apptainers"]["awk"]
         shell:
             """
             awk '{{if(NR%4==1) {{printf(">%s\\n",substr($0,2));}} else if(NR%4==2) print;}}' {input} | head -n {params.nreads} >  {output}   || echo "wierd"
@@ -161,7 +175,7 @@ if config['blast']['do']:
             fields="qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore staxids"
         threads: 4
         container:
-            config["apptainers"]["sequana_tools"]
+            config["apptainers"]["blast"]
         shell:
             """
             # requires BLASTDB to be defined !
@@ -189,11 +203,28 @@ if config['blast']['do']:
         output:
             "{sample}/blast/text.krona.html"
         container:
-            config["apptainers"]["sequana_tools"]
+            config["apptainers"]["krona"]
         shell:
             """
             ktImportText {input} -o {output}
             """
+
+    # Regenerate the sample summary.html to include the blast section
+    # Required because sequana_taxonomy creates summary.html before blast runs
+    rule regenerate_summary_with_blast:
+        input:
+            blast_csv="{sample}/blast/blast_summary.csv",
+            krona_html="{sample}/blast/text.krona.html",
+            html="{sample}/summary.html"
+        output:
+            touch("{sample}/.blast_summary_updated")
+        run:
+            from sequana.modules_report.kraken import KrakenModule
+            from sequana.utils import config as cfg
+            from pathlib import Path
+            sample_dir = Path(input.html).parent
+            cfg.output_dir = str(sample_dir)
+            KrakenModule(sample_dir / "kraken", output_filename="summary.html")
 
 # ================================================== summary plot
 #
@@ -303,8 +334,10 @@ rule dot2svg:
 #
 
 
-# Those rules takes a couple of seconds so no need for a cluster
-localrules: multiqc, rulegraph, summary_plot
+# Those rules takes a couple of seconds so no need for a cluster.
+# download_taxonomy is kept local so it runs on the submit node, which has
+# network access (compute nodes generally do not).
+localrules: multiqc, rulegraph, summary_plot, regenerate_summary_with_blast, download_taxonomy
 
 
 
@@ -322,28 +355,26 @@ onsuccess:
     from sequana.modules_report.kraken import KrakenModule
     from sequana.utils.datatables_js import DataTable
 
-    intro = """<h2>General Information</h2>{}""".format(manager.get_html_summary())
-    intro += """<div style="width:80%">This pipeline summarizes the taxonomic analysis
-                made on {} samples. Here below you can find a summary
-                of the analysis. The first plot (left) shows the proportion of
-                reads classified by the databases in each found kingdom (Eukaryota,
-                Bacteria, Viruses, Archea). If several databases were used,
-                you should also see a plot (right panel) with proportion of reads
-                classified in each database (rather than by kingdom).
-                The per-sample analysis are made with kraken. A multi-sample
-                report is also available as
+    intro = """<h2>General Information</h2>
+    <div style="width:80%">This pipeline summarizes the taxonomic analysis
+                made on {} samples. Below you can find a summary of the analysis.
+                The first plot (left) shows the proportion of reads classified by
+                the databases in each found kingdom (Eukaryota, Bacteria, Viruses,
+                Archaea). If several databases were used, you should also see a plot
+                (right panel) with the proportion of reads classified in each database
+                (rather than by kingdom). Per-sample analyses are performed with Kraken.
+                A multi-sample report is also available as a
                 <a href="multiqc/multiqc_report.html">sequana multiqc</a> report.
-                Individual report are also browsable (Go to the <a href="#kraken">
-                Individual taxonomic
-                reports</a> section here below).</div>""".format(len(manager.samples))
+                Individual reports are also browsable (see the <a href="#kraken">
+                Individual taxonomic reports</a> section below).</div>""".format(len(manager.samples))
 
     intro += """<div style="clear:both"></div>"""
     intro += """<h2>Analysis overview</h2>
         <div style="width:48%; float:left">
-            <p>Proportion of reads in virus, bacteria, human and unclassified categories is 
-               shown here below. The underlying data can be downloaded from 
-               <a href="outputs/sequana_kraken_summary.json">sequana_kraken_summary.json</a> file 
-               or here below as a CSV file.<br></p>
+            <p>The proportion of reads in virus, bacteria, human, and unclassified categories
+               is shown below. The underlying data can be downloaded from the
+               <a href="outputs/sequana_kraken_summary.json">sequana_kraken_summary.json</a> file
+               or as a CSV file below.<br></p>
     """
 
     img = SequanaReport.png_to_embedded_png("dummy_self", "outputs/proportion_kraken.png",
@@ -369,6 +400,9 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
         df.reset_index(inplace=True)
         df['link'] = links
         df = df.rename({"index": "sample"}, axis=1)
+        # Sanitize column names to avoid DataTables errors with special characters (colons, dots, etc)
+        # Dots break DataTables because it interprets them as nested-object accessors.
+        df.columns = [str(col).replace(":", "_").replace("/", "_").replace(".", "_") for col in df.columns]
         datatable = DataTable(df, 'kraken', index=False)
         datatable.datatable.datatable_options = {'paging': 'false',
                                                'buttons': ['copy', 'csv'],
@@ -390,6 +424,9 @@ in <a href="outputs/sequana_kraken_dbs_summary.json">sequana_kraken_dbs_summary.
     df.reset_index(inplace=True)
     df['link'] = links
     df = df.rename({"index": "sample"}, axis=1)
+    # Sanitize column names to avoid DataTables errors with special characters (colons, dots, etc)
+    # Dots break DataTables because it interprets them as nested-object accessors.
+    df.columns = [str(col).replace(":", "_").replace("/", "_").replace(".", "_") for col in df.columns]
     datatable = DataTable(df, 'kraken_kingdom', index=False)
     datatable.datatable.datatable_options = {'paging': 'false',
                                                'buttons': ['copy', 'csv'],

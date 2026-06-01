@@ -10,10 +10,12 @@ input_readtag: _R[12]_
 input_pattern: "*fastq.gz"
 
 apptainers:
-    sequana_tools: "https://zenodo.org/record/18257162/files/sequana_tools_26.1.14.img"
     graphviz: "https://zenodo.org/record/7928262/files/graphviz_7.0.5.img"
     multiqc: "https://zenodo.org/record/10205070/files/multiqc_1.16.0.img"
-    sequana: "https://zenodo.org/record/18257162/files/sequana_tools_26.1.14.img"
+    sequana: "https://zenodo.org/record/20467327/files/sequana_0.22.0.img"
+    krona: "https://zenodo.org/record/20451801/files/krona_2.8.1.img"
+    awk:  "https://zenodo.org/record/20451789/files/awk_5.3.2.img"
+    blast: "https://zenodo.org/record/7848524/files/blast_2.12.0.img"
 
 ##############################################################################
 # sequana_taxonomy
